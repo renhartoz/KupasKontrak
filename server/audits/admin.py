@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import AuditEvent, ClauseFinding
 
-# Register your models here.
+admin.site.register(AuditEvent)
+admin.site.register(ClauseFinding)

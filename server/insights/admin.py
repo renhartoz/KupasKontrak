@@ -1,3 +1,10 @@
 from django.contrib import admin
+from .models import (
+    ContractVisualization,
+    ActionRecommendation,
+    GeneratedContractDraft,
+)
 
-# Register your models here.
+admin.site.register(ContractVisualization)
+admin.site.register(ActionRecommendation)
+admin.site.register(GeneratedContractDraft)
