@@ -10,6 +10,47 @@ class OcrExtractionError(Exception):
     pass
 
 
+class PdfSanitizationError(Exception):
+    pass
+
+
+def sanitize_pdf_bytes(file_bytes: bytes) -> bytes:
+    try:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        doc.set_javascript("")
+        doc.set_open_action("")
+        for page in doc:
+            for link in list(page.get_links()):
+                page.delete_link(link)
+            for annot in list(page.annots()):
+                page.delete_annot(annot)
+            for field in list(page.widgets()):
+                page.delete_widget(field)
+        cleaned_bytes = doc.tobytes(garbage=4, deflate=True, clean=True)
+        doc.close()
+        return cleaned_bytes
+    except Exception as e:
+        raise PdfSanitizationError(f"PDF sanitization failed structurally: {e}")
+
+
+def strip_pdf_threats(input_path: str, output_path: str) -> None:
+    try:
+        doc = fitz.open(input_path)
+        doc.set_javascript("")
+        doc.set_open_action("")
+        for page in doc:
+            for link in list(page.get_links()):
+                page.delete_link(link)
+            for annot in list(page.annots()):
+                page.delete_annot(annot)
+            for field in list(page.widgets()):
+                page.delete_widget(field)
+        doc.save(output_path, garbage=4, deflate=True, clean=True)
+        doc.close()
+    except Exception as e:
+        raise PdfSanitizationError(f"PDF sanitization failed structurally: {e}")
+
+
 class OcrSpaceClient:
     endpoint = "https://api.ocr.space/parse/image"
 
@@ -71,6 +112,7 @@ def extract(document, file_bytes: bytes = None) -> str:
     if file_bytes is None:
         file_bytes = _fetch_file_bytes(document)
 
+    file_bytes = sanitize_pdf_bytes(file_bytes)
     doc_fitz = fitz.open(stream=file_bytes, filetype="pdf")
     native_text_parts = []
     for page in doc_fitz:

@@ -1,3 +1,4 @@
+import io
 import logging
 import time
 import cloudinary
@@ -68,9 +69,16 @@ def upload_file(file_obj, folder="", resource_type="raw"):
 def upload_document(file_obj, folder="contracts"):
     _configure_cloudinary()
     try:
+        from documents.services.extraction import sanitize_pdf_bytes, PdfSanitizationError
+
         file_obj.seek(0)
+        raw_bytes = file_obj.read()
+        cleaned_bytes = sanitize_pdf_bytes(raw_bytes)
+        clean_file_obj = io.BytesIO(cleaned_bytes)
+        clean_file_obj.name = getattr(file_obj, "name", "document.pdf")
+
         result = cloudinary.uploader.upload(
-            file_obj,
+            clean_file_obj,
             folder=folder,
             resource_type="raw",
             type="authenticated",
@@ -87,6 +95,10 @@ def upload_document(file_obj, folder="contracts"):
         logger.error("Cloudinary upload_document failed: %s", e)
         raise CloudinaryServiceError(f"Cloudinary upload failed: {e}")
     except Exception as e:
+        from documents.services.extraction import PdfSanitizationError
+        if isinstance(e, PdfSanitizationError):
+            logger.error("PDF sanitization failed during upload_document: %s", e)
+            raise
         logger.error("Unexpected error during Cloudinary upload_document: %s", e)
         raise CloudinaryServiceError(f"Unexpected upload error: {e}")
 
