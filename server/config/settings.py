@@ -218,7 +218,8 @@ OPENROUTER_MODEL_CHAIN = [
     if model.strip()
 ]
 
-PASAL_ID_MCP_ENDPOINT = env("PASAL_ID_MCP_ENDPOINT", default="https://pasal.id/api/v1/mcp")
+PASAL_ID_MCP_ENDPOINT = env("PASAL_ID_MCP_ENDPOINT", default="https://mcp.pasal.id/mcp")
 PASAL_ID_MCP_API_KEY = env("PASAL_ID_MCP_API_KEY", default="")
+PASAL_ID_MCP_TOOL_NAME = env("PASAL_ID_MCP_TOOL_NAME", default="")
 
 CLOUDINARY_SIGNED_URL_TTL_SECONDS = int(env("CLOUDINARY_SIGNED_URL_TTL_SECONDS", default=3600))
