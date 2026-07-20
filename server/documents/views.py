@@ -73,7 +73,7 @@ class DocumentRetryView(APIView):
 
     permission_classes = [IsAuthenticated, IsDocumentOwner]
 
-    @extend_schema(summary="Retry audit", responses={200: DocumentDetailSerializer})
+    @extend_schema(summary="Retry audit", request=None, responses={200: DocumentDetailSerializer})
     def post(self, request, pk):
         doc = get_object_or_404(Document, pk=pk)
         self.check_object_permissions(request, doc)

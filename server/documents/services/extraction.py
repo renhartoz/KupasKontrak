@@ -17,15 +17,20 @@ class PdfSanitizationError(Exception):
 def sanitize_pdf_bytes(file_bytes: bytes) -> bytes:
     try:
         doc = fitz.open(stream=file_bytes, filetype="pdf")
-        doc.set_javascript("")
-        doc.set_open_action("")
+        if hasattr(doc, "set_javascript"):
+            doc.set_javascript("")
+        if hasattr(doc, "set_open_action"):
+            doc.set_open_action("")
         for page in doc:
-            for link in list(page.get_links()):
-                page.delete_link(link)
-            for annot in list(page.annots()):
-                page.delete_annot(annot)
-            for field in list(page.widgets()):
-                page.delete_widget(field)
+            if hasattr(page, "get_links") and hasattr(page, "delete_link"):
+                for link in list(page.get_links()):
+                    page.delete_link(link)
+            if hasattr(page, "annots") and hasattr(page, "delete_annot"):
+                for annot in list(page.annots()):
+                    page.delete_annot(annot)
+            if hasattr(page, "widgets") and hasattr(page, "delete_widget"):
+                for field in list(page.widgets()):
+                    page.delete_widget(field)
         cleaned_bytes = doc.tobytes(garbage=4, deflate=True, clean=True)
         doc.close()
         return cleaned_bytes
@@ -36,15 +41,20 @@ def sanitize_pdf_bytes(file_bytes: bytes) -> bytes:
 def strip_pdf_threats(input_path: str, output_path: str) -> None:
     try:
         doc = fitz.open(input_path)
-        doc.set_javascript("")
-        doc.set_open_action("")
+        if hasattr(doc, "set_javascript"):
+            doc.set_javascript("")
+        if hasattr(doc, "set_open_action"):
+            doc.set_open_action("")
         for page in doc:
-            for link in list(page.get_links()):
-                page.delete_link(link)
-            for annot in list(page.annots()):
-                page.delete_annot(annot)
-            for field in list(page.widgets()):
-                page.delete_widget(field)
+            if hasattr(page, "get_links") and hasattr(page, "delete_link"):
+                for link in list(page.get_links()):
+                    page.delete_link(link)
+            if hasattr(page, "annots") and hasattr(page, "delete_annot"):
+                for annot in list(page.annots()):
+                    page.delete_annot(annot)
+            if hasattr(page, "widgets") and hasattr(page, "delete_widget"):
+                for field in list(page.widgets()):
+                    page.delete_widget(field)
         doc.save(output_path, garbage=4, deflate=True, clean=True)
         doc.close()
     except Exception as e:

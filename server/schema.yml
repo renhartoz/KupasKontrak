@@ -1,0 +1,1351 @@
+openapi: 3.0.3
+info:
+  title: KupasKontrak API
+  version: 1.0.0
+  description: KupasKontrak API Endpoint
+paths:
+  /api/v1/accounts/login/:
+    post:
+      operationId: v1_accounts_login_create
+      description: Authenticate user
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /api/v1/accounts/logout/:
+    post:
+      operationId: v1_accounts_logout_create
+      description: Logout user
+      summary: Logout session
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Logout'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '205':
+          description: No response body
+  /api/v1/accounts/me/:
+    get:
+      operationId: v1_accounts_me_retrieve
+      description: Profile details
+      summary: Retrieve profile
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: ''
+    patch:
+      operationId: v1_accounts_me_partial_update
+      description: Profile details
+      summary: Update profile
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserProfile'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: ''
+  /api/v1/accounts/refresh/:
+    post:
+      operationId: v1_accounts_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/v1/accounts/register/:
+    post:
+      operationId: v1_accounts_register_create
+      description: Register user
+      summary: Register account
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: ''
+  /api/v1/clauses/{clause_id}/ask/:
+    post:
+      operationId: v1_clauses_ask_create
+      description: Ask clause question
+      summary: Ask question
+      parameters:
+      - in: path
+        name: clause_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClauseAsk'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ClauseAsk'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ClauseAsk'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClauseInquiry'
+          description: ''
+  /api/v1/clauses/{clause_id}/inquiries/:
+    get:
+      operationId: v1_clauses_inquiries_list
+      description: List inquiry history
+      summary: List inquiry history
+      parameters:
+      - in: path
+        name: clause_id
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedClauseInquiryList'
+          description: ''
+  /api/v1/clauses/{id}/:
+    get:
+      operationId: v1_clauses_retrieve
+      description: Retrieve clause
+      summary: Retrieve clause
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClauseFinding'
+          description: ''
+  /api/v1/documents/:
+    get:
+      operationId: v1_documents_list
+      description: List documents
+      summary: List documents
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDocumentListList'
+          description: ''
+  /api/v1/documents/{document_id}/audit-events/:
+    get:
+      operationId: v1_documents_audit_events_list
+      description: List audit events
+      summary: List audit events
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditEventList'
+          description: ''
+  /api/v1/documents/{document_id}/clauses/:
+    get:
+      operationId: v1_documents_clauses_list
+      description: List clauses
+      summary: List clauses
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedClauseFindingList'
+          description: ''
+  /api/v1/documents/{document_id}/drafts/:
+    post:
+      operationId: v1_documents_drafts_create
+      description: Create draft
+      summary: Create draft
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DraftCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DraftCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/documents/{document_id}/drafts/list/:
+    get:
+      operationId: v1_documents_drafts_list_list
+      description: List drafts
+      summary: List drafts
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGeneratedContractDraftList'
+          description: ''
+  /api/v1/documents/{document_id}/recommendations/:
+    get:
+      operationId: v1_documents_recommendations_list
+      description: List recommendations
+      summary: List recommendations
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedActionRecommendationList'
+          description: ''
+  /api/v1/documents/{document_id}/visualizations/:
+    get:
+      operationId: v1_documents_visualizations_list
+      description: List visualizations
+      summary: List visualizations
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedContractVisualizationList'
+          description: ''
+  /api/v1/documents/{id}/:
+    get:
+      operationId: v1_documents_retrieve
+      description: Retrieve document
+      summary: Retrieve document
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDetail'
+          description: ''
+  /api/v1/documents/{id}/export/:
+    post:
+      operationId: v1_documents_export_create
+      description: Export audit
+      summary: Export audit
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentExport'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DocumentExport'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentExport'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/documents/{id}/retry/:
+    post:
+      operationId: v1_documents_retry_create
+      description: Retry audit
+      summary: Retry audit
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDetail'
+          description: ''
+  /api/v1/documents/upload/:
+    post:
+      operationId: v1_documents_upload_create
+      description: Upload PDF
+      summary: Upload document
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DocumentUpload'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDetail'
+          description: ''
+  /api/v1/drafts/{id}/:
+    get:
+      operationId: v1_drafts_retrieve
+      description: Retrieve draft
+      summary: Retrieve draft
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContractDraft'
+          description: ''
+components:
+  schemas:
+    ActionRecommendation:
+      type: object
+      description: Recommendation details
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        document:
+          type: string
+          format: uuid
+        clause:
+          type: string
+          nullable: true
+        action_type:
+          $ref: '#/components/schemas/ActionTypeEnum'
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
+        recommendation_text:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - action_type
+      - created_at
+      - document
+      - id
+      - priority
+      - recommendation_text
+    ActionTypeEnum:
+      enum:
+      - negotiate
+      - reject
+      - request_clarification
+      - accept_with_condition
+      - seek_legal_aid
+      type: string
+      description: |-
+        * `negotiate` - Negotiate
+        * `reject` - Reject
+        * `request_clarification` - Request Clarification
+        * `accept_with_condition` - Accept With Condition
+        * `seek_legal_aid` - Seek Legal Aid
+    AuditEvent:
+      type: object
+      description: Audit event details
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        document:
+          type: string
+          format: uuid
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        payload: {}
+        sequence_number:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - document
+      - event_type
+      - id
+      - payload
+      - sequence_number
+    ClauseAsk:
+      type: object
+      description: Ask question
+      properties:
+        question:
+          type: string
+          minLength: 3
+      required:
+      - question
+    ClauseFinding:
+      type: object
+      description: Clause finding details
+      properties:
+        id:
+          type: string
+          maxLength: 16
+        document:
+          type: string
+          format: uuid
+        clause_text:
+          type: string
+        clause_safety_score:
+          allOf:
+          - $ref: '#/components/schemas/ClauseSafetyScoreEnum'
+          minimum: 0
+          maximum: 32767
+        category:
+          type: string
+          maxLength: 64
+        risk_level:
+          $ref: '#/components/schemas/RiskLevelEnum'
+        plain_language_summary:
+          type: string
+        legal_reference:
+          nullable: true
+        order_index:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+      required:
+      - clause_text
+      - document
+      - id
+      - order_index
+      - plain_language_summary
+      - risk_level
+    ClauseInquiry:
+      type: object
+      description: Inquiry details
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        clause:
+          type: string
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          readOnly: true
+        question:
+          type: string
+        answer:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - answer
+      - clause
+      - created_at
+      - id
+      - question
+      - user
+    ClauseSafetyScoreEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      type: integer
+      description: |-
+        * `1` - 1
+        * `2` - 2
+        * `3` - 3
+        * `4` - 4
+        * `5` - 5
+    ContractVisualization:
+      type: object
+      description: Visualization details
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        document:
+          type: string
+          format: uuid
+        clause:
+          type: string
+          nullable: true
+        scenario_type:
+          $ref: '#/components/schemas/ScenarioTypeEnum'
+        data: {}
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - data
+      - document
+      - id
+      - scenario_type
+    DocumentDetail:
+      type: object
+      description: Document details
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        original_filename:
+          type: string
+          maxLength: 255
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        source_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SourceTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        page_count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        file_size_bytes:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        overall_risk_score:
+          type: number
+          format: double
+          nullable: true
+        score_breakdown:
+          nullable: true
+        failure_reason:
+          type: string
+          nullable: true
+        signed_pdf_url:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - file_size_bytes
+      - id
+      - original_filename
+      - signed_pdf_url
+      - updated_at
+    DocumentExport:
+      type: object
+      description: Export document
+      properties:
+        format:
+          allOf:
+          - $ref: '#/components/schemas/FormatEnum'
+          default: pdf
+    DocumentList:
+      type: object
+      description: List documents
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        original_filename:
+          type: string
+          maxLength: 255
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        overall_risk_score:
+          type: number
+          format: double
+          nullable: true
+        source_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SourceTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - original_filename
+    DocumentUpload:
+      type: object
+      description: Upload document
+      properties:
+        file:
+          type: string
+          format: uri
+      required:
+      - file
+    DraftCreate:
+      type: object
+      description: Create draft
+      properties:
+        draft_type:
+          $ref: '#/components/schemas/DraftTypeEnum'
+        custom_instructions:
+          type: string
+      required:
+      - draft_type
+    DraftTypeEnum:
+      enum:
+      - full_rewrite
+      - clause_patch
+      type: string
+      description: |-
+        * `full_rewrite` - Full Rewrite
+        * `clause_patch` - Clause Patch
+    EventTypeEnum:
+      enum:
+      - extraction_started
+      - extraction_done
+      - clause_flagged
+      - mcp_validated
+      - mcp_validation_failed
+      - score_computed
+      - visualization_generated
+      - recommendation_generated
+      - draft_generated
+      - audit_completed
+      - audit_failed
+      type: string
+      description: |-
+        * `extraction_started` - Extraction Started
+        * `extraction_done` - Extraction Done
+        * `clause_flagged` - Clause Flagged
+        * `mcp_validated` - Mcp Validated
+        * `mcp_validation_failed` - Mcp Validation Failed
+        * `score_computed` - Score Computed
+        * `visualization_generated` - Visualization Generated
+        * `recommendation_generated` - Recommendation Generated
+        * `draft_generated` - Draft Generated
+        * `audit_completed` - Audit Completed
+        * `audit_failed` - Audit Failed
+    FormatEnum:
+      enum:
+      - pdf
+      - docx
+      type: string
+      description: |-
+        * `pdf` - pdf
+        * `docx` - docx
+    GeneratedContractDraft:
+      type: object
+      description: Draft details
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        document:
+          type: string
+          format: uuid
+        requested_by:
+          type: string
+          format: uuid
+        draft_type:
+          $ref: '#/components/schemas/DraftTypeEnum'
+        content: {}
+        disclaimer:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - content
+      - created_at
+      - document
+      - draft_type
+      - id
+      - requested_by
+    Logout:
+      type: object
+      description: Logout session
+      properties:
+        refresh:
+          type: string
+      required:
+      - refresh
+    NullEnum:
+      enum:
+      - null
+    PaginatedActionRecommendationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionRecommendation'
+    PaginatedAuditEventList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+    PaginatedClauseFindingList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClauseFinding'
+    PaginatedClauseInquiryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClauseInquiry'
+    PaginatedContractVisualizationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractVisualization'
+    PaginatedDocumentListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentList'
+    PaginatedGeneratedContractDraftList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeneratedContractDraft'
+    PatchedUserProfile:
+      type: object
+      description: Retrieve profile
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        tier:
+          $ref: '#/components/schemas/TierEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PriorityEnum:
+      enum:
+      - tinggi
+      - sedang
+      - rendah
+      type: string
+      description: |-
+        * `tinggi` - Tinggi
+        * `sedang` - Sedang
+        * `rendah` - Rendah
+    RiskLevelEnum:
+      enum:
+      - hijau_tua
+      - hijau_muda
+      - kuning
+      - merah_muda
+      - merah_tua
+      type: string
+      description: |-
+        * `hijau_tua` - Hijau Tua
+        * `hijau_muda` - Hijau Muda
+        * `kuning` - Kuning
+        * `merah_muda` - Merah Muda
+        * `merah_tua` - Merah Tua
+    ScenarioTypeEnum:
+      enum:
+      - financial_loss
+      - clause_impact
+      - before_after
+      type: string
+      description: |-
+        * `financial_loss` - Financial Loss
+        * `clause_impact` - Clause Impact
+        * `before_after` - Before After
+    SourceTypeEnum:
+      enum:
+      - native
+      - scanned
+      type: string
+      description: |-
+        * `native` - Native PDF
+        * `scanned` - Scanned PDF
+    StatusEnum:
+      enum:
+      - uploaded
+      - extracting
+      - analyzing
+      - validating_mcp
+      - generating_insights
+      - done
+      - failed
+      type: string
+      description: |-
+        * `uploaded` - Uploaded
+        * `extracting` - Extracting
+        * `analyzing` - Analyzing
+        * `validating_mcp` - Validating Mcp
+        * `generating_insights` - Generating Insights
+        * `done` - Done
+        * `failed` - Failed
+    TierEnum:
+      enum:
+      - b2c_esensial
+      - b2b_profesional
+      type: string
+      description: |-
+        * `b2c_esensial` - B2C Esensial
+        * `b2b_profesional` - B2B Profesional
+    TokenObtainPair:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - password
+      - refresh
+      - username
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    UserProfile:
+      type: object
+      description: Retrieve profile
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        tier:
+          $ref: '#/components/schemas/TierEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - email
+      - id
+      - username
+    UserRegister:
+      type: object
+      description: Register account
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+        tier:
+          $ref: '#/components/schemas/TierEnum'
+      required:
+      - email
+      - id
+      - password
+      - username
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
