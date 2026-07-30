@@ -20,23 +20,22 @@ SAFETY_SCORE_TO_LEVEL = {
 }
 
 SYSTEM_PROMPT = """Anda adalah KupasKontrak AI, asisten audit kontrak bahasa Indonesia yang menganalisis klausul perjanjian kerja untuk pekerja informal.
-Tugas Anda adalah mengekstrak semua klausul penting dalam dokumen dan mengklasifikasikannya berdasarkan rubrik skor keamanan klausul (clause_safety_score) dari skala 1 sampai 5:
+Tugas Anda adalah mengekstrak semua klausul penting dalam dokumen dan menilainya berdasarkan metodologi Multi-Dimensional Sensitivity Analysis.
 
-Rubrik Skor Keamanan Klausul (clause_safety_score):
-- 5 (Hijau Tua): Klausul sangat seimbang dan melindungi pengguna, sesuai standar hukum ketenagakerjaan/perdata.
-- 4 (Hijau Muda): Klausul standar, cenderung berpihak pada korporasi tapi masih dalam batas kewajaran dan legalitas.
-- 3 (Kuning): Klausul ambigu atau scope tidak terdefinisi jelas, memicu rekomendasi perbaikan.
-- 2 (Merah Muda): Klausul eksploitatif yang signifikan merugikan posisi tawar pengguna.
-- 1 (Merah Tua): Anomali hukum mutlak — bertentangan langsung dengan regulasi positif Indonesia.
+Langkah 1: Legal Compliance Gateway (is_fatal)
+- Tentukan apakah klausul melanggar undang-undang positif Indonesia secara mutlak (Ilegal).
+- Jika Ilegal, set `is_fatal` menjadi true.
+
+Langkah 2: Weighted Asymmetry Assessment
+Jika klausul sah secara formal (is_fatal = false), nilai klausul berdasarkan 3 kriteria risiko menggunakan skala 1 sampai 5.
+(Skala: 5 = Sangat Seimbang/Adil/Aman, 1 = Sangat Eksploitatif/Tidak Adil)
+- S1 (Keseimbangan Hak & Sanksi): Apakah hak dan sanksi terdistribusi adil?
+- S2 (Transparansi Parameter Finansial): Apakah nominal, denda, atau kompensasi ditulis transparan?
+- S3 (Batas Kewajaran Industri): Apakah klausul ini umum dan wajar di industri pekerja informal?
+Jika `is_fatal` true, isi S1, S2, dan S3 dengan 1.
 
 Kategori klausul (category) yang diizinkan:
-- upah_kompensasi
-- phk_sepihak
-- pembatasan_hak_cipta
-- non_kompete
-- kerahasiaan
-- domisili_hukum
-- default
+- upah_kompensasi, phk_sepihak, pembatasan_hak_cipta, non_kompete, kerahasiaan, domisili_hukum, default
 
 Anda WAJIB mengembalikan respons dalam format JSON murni dengan skema berikut:
 {
@@ -45,8 +44,10 @@ Anda WAJIB mengembalikan respons dalam format JSON murni dengan skema berikut:
     {
       "id": "c-xxxx (id singkat misal c-1a2b)",
       "clause_text": "string kutipan asli persis dari dokumen",
-      "is_flagged": true atau false (true jika clause_safety_score <= 3),
-      "clause_safety_score": int antara 1 dan 5,
+      "is_fatal": boolean (true jika melanggar hukum mutlak),
+      "s1_score": int (1-5),
+      "s2_score": int (1-5),
+      "s3_score": int (1-5),
       "category": "string dari kategori di atas",
       "plain_language_summary": "string penjelasan bahasa awam yang jelas",
       "mcp_query_hint": "string frasa pencarian rujukan pasal hukum Indonesia yang spesifik"
@@ -61,34 +62,52 @@ class AnalyzedClause:
         self,
         id,
         clause_text,
-        is_flagged,
-        clause_safety_score,
+        is_fatal,
+        s1_score,
+        s2_score,
+        s3_score,
         category,
         plain_language_summary,
         mcp_query_hint,
+        **kwargs
     ):
         self.id = str(id)
         self.clause_text = str(clause_text)
-        self.is_flagged = bool(is_flagged)
-        try:
-            self.clause_safety_score = int(clause_safety_score)
-        except (ValueError, TypeError):
-            self.clause_safety_score = 3
-        if self.clause_safety_score < 1:
-            self.clause_safety_score = 1
-        elif self.clause_safety_score > 5:
-            self.clause_safety_score = 5
+        self.is_fatal = bool(is_fatal)
+        
+        def parse_score(val):
+            try:
+                v = int(val)
+                return max(1, min(5, v))
+            except (ValueError, TypeError):
+                return 3
+                
+        self.s1_score = parse_score(s1_score)
+        self.s2_score = parse_score(s2_score)
+        self.s3_score = parse_score(s3_score)
+        
+        # Calculate intermediate clause_safety_score based on SAW
+        if self.is_fatal:
+            self.clause_safety_score = 1.0
+        else:
+            self.clause_safety_score = (self.s1_score * 0.45) + (self.s2_score * 0.35) + (self.s3_score * 0.20)
+            
+        self.is_flagged = self.clause_safety_score <= 3.0
         self.category = str(category)
         self.plain_language_summary = str(plain_language_summary)
         self.mcp_query_hint = str(mcp_query_hint)
         self.risk_level = SAFETY_SCORE_TO_LEVEL.get(
-            self.clause_safety_score, "kuning"
+            round(self.clause_safety_score), "kuning"
         )
 
     def to_event_payload(self) -> dict:
         return {
             "clause_id": self.id,
             "clause_text": self.clause_text,
+            "is_fatal": self.is_fatal,
+            "s1_score": self.s1_score,
+            "s2_score": self.s2_score,
+            "s3_score": self.s3_score,
             "clause_safety_score": self.clause_safety_score,
             "risk_level": self.risk_level,
             "category": self.category,

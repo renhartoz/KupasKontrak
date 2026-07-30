@@ -47,9 +47,17 @@ class ClauseFinding(models.Model):
         "documents.Document", on_delete=models.CASCADE, related_name="clauses"
     )
     clause_text = models.TextField()
-    clause_safety_score = models.PositiveSmallIntegerField(
-        choices=[(i, i) for i in range(1, 6)], default=3
+    is_fatal = models.BooleanField(default=False)
+    s1_score = models.PositiveSmallIntegerField(
+        choices=[(i, i) for i in range(1, 6)], null=True, blank=True
     )
+    s2_score = models.PositiveSmallIntegerField(
+        choices=[(i, i) for i in range(1, 6)], null=True, blank=True
+    )
+    s3_score = models.PositiveSmallIntegerField(
+        choices=[(i, i) for i in range(1, 6)], null=True, blank=True
+    )
+    clause_safety_score = models.FloatField(default=3.0)
     category = models.CharField(max_length=64, default="default")
     risk_level = models.CharField(max_length=16, choices=RiskLevel.choices)
     plain_language_summary = models.TextField()

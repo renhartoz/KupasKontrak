@@ -45,7 +45,7 @@ def compute_document_score(document) -> tuple[float, list[dict], int]:
         weight = CATEGORY_WEIGHTS.get(clause.category, CATEGORY_WEIGHTS["default"])
         weighted_sum += clause.clause_safety_score * weight
         weight_sum += weight
-        if clause.clause_safety_score == 1:
+        if getattr(clause, "is_fatal", False) or clause.clause_safety_score <= 1.0:
             fatal_count += 1
 
     base_score = (weighted_sum / (5 * weight_sum)) * 100 if weight_sum else 0.0

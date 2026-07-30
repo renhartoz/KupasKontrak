@@ -40,7 +40,7 @@ class Command(BaseCommand):
                     self.stdout.write("\n── Step 1: resolve_law ──")
                     resolve_law_id = await client._resolve_law_id(session, query)
                     if resolve_law_id:
-                        self.stdout.write(self.style.SUCCESS(f"  ✓ law_id = {resolve_law_id}"))
+                        self.stdout.write(self.style.SUCCESS(f"  ✓ law_id = {resolve_law_id} (Path A)"))
                     else:
                         self.stdout.write("  ✗ no match — Path B: search_legal")
 
@@ -69,7 +69,7 @@ class Command(BaseCommand):
                         self.stdout.write(self.style.SUCCESS(f"  → picked: {best.get('citation')} (law_id={law_id})"))
 
                     self.stdout.write("\n── Step 3: get_law_context ──")
-                    law_ref = query if resolve_law_id else best.get("citation", "")
+                    law_ref = resolve_law_id if resolve_law_id else best.get("citation", "")
                     self.stdout.write(f"  law arg: {law_ref!r}")
                     ctx_payload = None
                     if law_ref:

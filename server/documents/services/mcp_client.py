@@ -50,9 +50,9 @@ class MCPClient:
                     law_id = await self._resolve_law_id(session, query_text)
 
                     if law_id:
-                        context = await self._get_law_context(session, query_text)
+                        context = await self._get_law_context(session, law_id)
                         if context:
-                            read_result = await self._read_law(session, query_text)
+                            read_result = await self._read_law(session, law_id)
                             if read_result:
                                 return self._format_from_read(read_result, context)
                             ref = self._format_from_context(context)
@@ -99,12 +99,12 @@ class MCPClient:
         payload = self._extract_json_payload(result)
         if not payload:
             return None
-        return payload.get("law_id")
+        return payload.get("law_id") or (payload.get("law") or {}).get("law_id")
 
     async def _search_legal(self, session, query_text: str) -> list:
         result = await session.call_tool(
             self.search_tool,
-            arguments={"query": query_text, "limit": 5},
+            arguments={"query": query_text, "limit": 20},
         )
         if getattr(result, "isError", False):
             raise MCPValidationError(f"MCP pasal.id mengembalikan error: {getattr(result, 'content', '')}")
@@ -118,7 +118,7 @@ class MCPClient:
             )
         return results
 
-    async def _get_law_context(self, session, law_ref: str) -> dict | None:
+    async def _get_law_context(self, session, law_ref: int | str) -> dict | None:
         try:
             result = await session.call_tool(self.context_tool, arguments={"law": law_ref})
         except Exception:
@@ -130,7 +130,7 @@ class MCPClient:
             return None
         return payload
 
-    async def _read_law(self, session, law_ref: str, selector: str = "menimbang") -> dict | None:
+    async def _read_law(self, session, law_ref: int | str, selector: str = "menimbang") -> dict | None:
         try:
             result = await session.call_tool(
                 self.read_tool, arguments={"law": law_ref, "selector": selector}

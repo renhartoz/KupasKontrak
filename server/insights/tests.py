@@ -36,8 +36,12 @@ class InsightsTests(APITestCase):
             id="insight-clause-1",
             document=self.document,
             clause_text="Klausul pembayaran standar.",
-            clause_safety_score=5,
-            category="pembayaran",
+            is_fatal=False,
+            s1_score=5,
+            s2_score=5,
+            s3_score=5,
+            clause_safety_score=5.0,
+            category="default",
             risk_level=ClauseFinding.RiskLevel.HIJAU_TUA,
             plain_language_summary="Aman.",
             order_index=0,
@@ -46,8 +50,12 @@ class InsightsTests(APITestCase):
             id="insight-clause-2",
             document=self.document,
             clause_text="Denda keterlambatan 50% per hari.",
-            clause_safety_score=1,
-            category="sanksi",
+            is_fatal=True,
+            s1_score=1,
+            s2_score=1,
+            s3_score=1,
+            clause_safety_score=1.0,
+            category="default",
             risk_level=ClauseFinding.RiskLevel.MERAH_TUA,
             plain_language_summary="Sangat merugikan.",
             order_index=1,
@@ -60,10 +68,15 @@ class InsightsTests(APITestCase):
     def test_scoring_formula_calculation(self):
         score, breakdown, fatal_count = compute_document_score(self.document)
         self.assertEqual(fatal_count, 1)
+        # Using SAW: c1 = 5.0 (weight 1.0), c2 = 1.0 (weight 1.0)
+        # weighted_sum = 5.0*1.0 + 1.0*1.0 = 6.0
+        # weight_sum = 2.0
+        # base_score = (6.0 / (5 * 2.0)) * 100 = 60.0
+        # penalty = 1 * 25 = 25
+        # overall_score = max(0, 60.0 - 25) = 35.0
         self.assertEqual(score, 35.0)
         breakdown_cats = [b["category"] for b in breakdown]
-        self.assertIn("pembayaran", breakdown_cats)
-        self.assertIn("sanksi", breakdown_cats)
+        self.assertIn("default", breakdown_cats)
 
     def test_visualization_and_recommendation_generators(self):
         vis_list = generate_visualizations(self.document)
