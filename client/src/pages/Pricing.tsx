@@ -1,0 +1,102 @@
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Check } from 'lucide-react'
+
+export function Pricing() {
+  return (
+    <div className="max-w-7xl mx-auto space-y-12 py-12 animate-fade-in">
+      <div className="text-center max-w-3xl mx-auto">
+        <h1 className="text-4xl md:text-5xl font-playfair text-primary font-bold mb-4 tracking-tight">Kelola Paket Anda</h1>
+        <p className="text-sm font-inter text-muted-foreground leading-relaxed">
+          Pilih paket yang paling sesuai dengan kebutuhan perusahaan Anda. Transparan, tanpa biaya tersembunyi.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Starter Plan */}
+        <Card className="p-8 border border-border shadow-sm rounded-xl bg-card flex flex-col">
+          <h2 className="text-2xl font-playfair font-bold text-foreground mb-2">Starter</h2>
+          <p className="text-sm font-inter text-muted-foreground mb-6">Cocok untuk individu dan bisnis kecil yang baru memulai.</p>
+          <div className="mb-8">
+            <span className="text-4xl font-playfair font-bold">Gratis</span>
+          </div>
+          <ul className="space-y-4 mb-8 flex-1">
+            <li className="flex items-start gap-3 text-sm font-inter text-foreground">
+              <Check className="w-5 h-5 text-primary shrink-0" />
+              <span>3 Pemindaian Kontrak / Bulan</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm font-inter text-foreground">
+              <Check className="w-5 h-5 text-primary shrink-0" />
+              <span>Analisis Risiko Standar</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm font-inter text-foreground">
+              <Check className="w-5 h-5 text-primary shrink-0" />
+              <span>Dukungan Email Dasar</span>
+            </li>
+          </ul>
+          <Button variant="outline" className="w-full font-space text-xs uppercase tracking-widest h-11">Paket Saat Ini</Button>
+        </Card>
+
+        {/* Pro Plan */}
+        <Card className="p-8 border-2 border-primary shadow-md rounded-xl bg-primary/5 flex flex-col relative transform lg:-translate-y-4">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground text-[10px] font-space font-bold uppercase tracking-widest py-1 px-4 rounded-full">
+            Paling Populer
+          </div>
+          <h2 className="text-2xl font-playfair font-bold text-primary mb-2">Pro B2B</h2>
+          <p className="text-sm font-inter text-muted-foreground mb-6">Paket komprehensif untuk tim legal dan perusahaan berkembang.</p>
+          <div className="mb-8">
+            <span className="text-4xl font-playfair font-bold">Rp 499k</span>
+            <span className="text-sm font-inter text-muted-foreground">/bulan</span>
+          </div>
+          <ul className="space-y-4 mb-8 flex-1">
+            <li className="flex items-start gap-3 text-sm font-inter text-foreground">
+              <Check className="w-5 h-5 text-primary shrink-0" />
+              <span className="font-medium">Pemindaian Kontrak Tak Terbatas</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm font-inter text-foreground">
+              <Check className="w-5 h-5 text-primary shrink-0" />
+              <span>Analisis Risiko Mendalam (AI Lanjutan)</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm font-inter text-foreground">
+              <Check className="w-5 h-5 text-primary shrink-0" />
+              <span>Hingga 10 Anggota Tim</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm font-inter text-foreground">
+              <Check className="w-5 h-5 text-primary shrink-0" />
+              <span>Integrasi Editor Dokumen Premium</span>
+            </li>
+          </ul>
+          <Button className="w-full font-space text-xs uppercase tracking-widest h-11 bg-primary text-primary-foreground hover:bg-primary/90">Beralih ke Pro</Button>
+        </Card>
+
+        {/* Enterprise Plan */}
+        <Card className="p-8 border border-border shadow-sm rounded-xl bg-card flex flex-col">
+          <h2 className="text-2xl font-playfair font-bold text-foreground mb-2">Enterprise</h2>
+          <p className="text-sm font-inter text-muted-foreground mb-6">Solusi kustom untuk korporasi dengan kebutuhan legal berskala besar.</p>
+          <div className="mb-8">
+            <span className="text-4xl font-playfair font-bold">Kustom</span>
+          </div>
+          <ul className="space-y-4 mb-8 flex-1">
+            <li className="flex items-start gap-3 text-sm font-inter text-foreground">
+              <Check className="w-5 h-5 text-primary shrink-0" />
+              <span>Semua Fitur Pro</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm font-inter text-foreground">
+              <Check className="w-5 h-5 text-primary shrink-0" />
+              <span>API Integrasi Khusus</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm font-inter text-foreground">
+              <Check className="w-5 h-5 text-primary shrink-0" />
+              <span>Dedicated Account Manager</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm font-inter text-foreground">
+              <Check className="w-5 h-5 text-primary shrink-0" />
+              <span>Layanan Single Sign-On (SSO)</span>
+            </li>
+          </ul>
+          <Button variant="outline" className="w-full font-space text-xs uppercase tracking-widest h-11">Hubungi Tim Sales</Button>
+        </Card>
+      </div>
+    </div>
+  )
+}
