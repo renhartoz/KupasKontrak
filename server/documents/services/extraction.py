@@ -69,10 +69,11 @@ class OcrSpaceClient:
         if not api_key:
             raise OcrExtractionError("OCR_SPACE_API_KEY is not configured.")
 
-        if len(file_bytes) <= 1024 * 1024:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        if len(doc) <= 3 and len(file_bytes) <= 1024 * 1024:
             return self._send_request(file_bytes, filename, "application/pdf", "PDF")
 
-        return self._extract_page_by_page(file_bytes, filename)
+        return self._extract_page_by_page(file_bytes, filename, doc)
 
     def _send_request(self, file_data: bytes, filename: str, content_type: str, filetype: str) -> str:
         response = requests.post(
@@ -80,7 +81,7 @@ class OcrSpaceClient:
             files={"file": (filename, file_data, content_type)},
             data={
                 "apikey": getattr(settings, "OCR_SPACE_API_KEY", ""),
-                "language": "ind",
+                "language": "auto",
                 "OCREngine": 2,
                 "isTable": True,
                 "scale": True,
@@ -98,8 +99,7 @@ class OcrSpaceClient:
         parsed_results = result.get("ParsedResults", [])
         return "\n".join(page.get("ParsedText", "") for page in parsed_results if page.get("ParsedText"))
 
-    def _extract_page_by_page(self, file_bytes: bytes, filename: str) -> str:
-        doc = fitz.open(stream=file_bytes, filetype="pdf")
+    def _extract_page_by_page(self, file_bytes: bytes, filename: str, doc) -> str:
         text_parts = []
         for page_num in range(len(doc)):
             page = doc[page_num]

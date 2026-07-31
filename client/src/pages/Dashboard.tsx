@@ -1,4 +1,4 @@
-import { FileText, ShieldAlert, Clock, ArrowRight, Upload, CheckCircle, ChevronRight, AlertTriangle, Award, Check } from 'lucide-react'
+import { FileText, Clock, ArrowRight, Upload, CheckCircle, ChevronRight, AlertTriangle, Award, CreditCard } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -50,7 +50,7 @@ export function Dashboard() {
       {/* Header Section */}
       <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl md:text-5xl font-playfair text-primary font-bold mb-3 tracking-tight">Selamat datang, {user?.username || 'Pengguna'}!</h1>
+          <h1 className="text-4xl md:text-5xl font-instrument text-primary mb-3 tracking-tight">Selamat datang, {user?.username || 'Pengguna'}!</h1>
           <p className="text-sm font-inter text-muted-foreground max-w-lg">
             Berikut ringkasan aktivitas, status dokumen legal Anda, dan wawasan risiko secara keseluruhan.
           </p>
@@ -59,7 +59,7 @@ export function Dashboard() {
           <Button variant="outline" className="font-space text-xs tracking-widest uppercase h-10 px-5">
             Laporan
           </Button>
-          <Button onClick={() => navigate('/scanner')} className="bg-primary hover:bg-primary/90 text-primary-foreground font-space text-xs tracking-widest uppercase h-10 px-5 shadow-sm">
+          <Button onClick={() => navigate('/scanner')} className="bg-primary hover:bg-primary/90 text-primary-foreground font-space text-xs tracking-widest uppercase h-10 px-5 shadow-sm cursor-pointer">
             Unggah Kontrak
           </Button>
         </div>
@@ -72,7 +72,7 @@ export function Dashboard() {
             <span className="font-space text-xs text-muted-foreground uppercase tracking-widest font-semibold">Total Dokumen</span>
             <FileText className="w-4 h-4 text-primary" />
           </div>
-          <span className="text-3xl font-playfair font-bold text-foreground">
+          <span className="text-3xl font-instrument text-foreground">
             {isLoading ? '...' : totalDocuments}
           </span>
           <span className="text-xs font-inter text-muted-foreground">Portofolio aktif</span>
@@ -82,7 +82,7 @@ export function Dashboard() {
             <span className="font-space text-xs text-muted-foreground uppercase tracking-widest font-semibold">Risiko Tinggi</span>
             <AlertTriangle className="w-4 h-4 text-destructive" />
           </div>
-          <span className="text-3xl font-playfair font-bold text-foreground">
+          <span className="text-3xl font-instrument text-foreground">
             {isLoading ? '...' : highRisk}
           </span>
           <span className="text-xs font-inter text-destructive font-medium">Butuh perhatian</span>
@@ -92,7 +92,7 @@ export function Dashboard() {
             <span className="font-space text-xs text-muted-foreground uppercase tracking-widest font-semibold">Kontrak Aman</span>
             <CheckCircle className="w-4 h-4 text-emerald-600" />
           </div>
-          <span className="text-3xl font-playfair font-bold text-foreground">
+          <span className="text-3xl font-instrument text-foreground">
             {isLoading ? '...' : safeContracts}
           </span>
           <span className="text-xs font-inter text-emerald-600 font-medium">Telah diverifikasi</span>
@@ -102,7 +102,7 @@ export function Dashboard() {
             <span className="font-space text-xs text-muted-foreground uppercase tracking-widest font-semibold">Skor Rata-rata</span>
             <Award className="w-4 h-4 text-secondary" />
           </div>
-          <span className="text-3xl font-playfair font-bold text-foreground flex items-baseline gap-1">
+          <span className="text-3xl font-instrument text-foreground flex items-baseline gap-1">
             {isLoading ? '...' : averageScore}
             <span className="text-sm text-muted-foreground font-inter font-normal">/100</span>
           </span>
@@ -116,30 +116,58 @@ export function Dashboard() {
         {/* Main Action Card */}
         <Card className="md:col-span-2 bg-primary/5 border-primary/20 shadow-sm p-5 md:p-6 rounded-xl overflow-hidden group">
           <div className="flex flex-col items-start h-full justify-center">
-            <div className="w-10 h-10 bg-primary/10 text-primary flex items-center justify-center mb-3 rounded-md">
-              <Upload className="w-5 h-5" />
+            <div className="flex flex-row items-center justify-start gap-4">
+              <div className="w-10 h-10 bg-primary/10 text-primary flex items-center justify-center mb-3 rounded-md gap-2">
+                <Upload className="w-5 h-5" />
+              </div>
+              <h2 className="text-2xl md:text-3xl font-instrument text-primary mb-2 tracking-tight">Mulai Analisis Baru</h2>
             </div>
-            <h2 className="text-2xl md:text-3xl font-playfair text-primary font-bold mb-2 tracking-tight">Mulai Analisis Baru</h2>
-            <p className="text-sm font-inter text-muted-foreground leading-relaxed max-w-xl mb-5">
+            <p className="text-sm font-inter text-muted-foreground leading-relaxed max-w-xl mb-2">
               Unggah kontrak atau dokumen legal baru untuk mendapatkan analisis risiko, rekomendasi perbaikan, dan ringkasan eksekutif instan dari AI.
             </p>
-            <Button onClick={() => navigate('/scanner')} className="bg-primary hover:bg-primary/90 text-xs font-space uppercase tracking-widest px-8 h-12 rounded-md w-full sm:w-auto text-primary-foreground shadow-sm">
+            
+            <div className="bg-card/50 border border-border/50 p-4 rounded-lg w-full mb-2">
+              <h3 className="text-[10px] font-space font-bold uppercase tracking-widest text-primary mb-3 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                Fitur Unggulan AI
+              </h3>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <li className="flex items-center gap-2 text-sm font-inter text-foreground">
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                  <span>Deteksi klausul berisiko</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm font-inter text-foreground">
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                  <span>Ringkasan eksekutif instan</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm font-inter text-foreground">
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                  <span>Rekomendasi perbaikan</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm font-inter text-foreground">
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                  <span>Ekspor format standar</span>
+                </li>
+              </ul>
+            </div>
+
+            <Button onClick={() => navigate('/scanner')} className="bg-primary hover:bg-primary/90 text-xs font-space uppercase tracking-widest px-8 h-12 rounded-md w-full sm:w-auto text-primary-foreground shadow-sm cursor-pointer">
               UNGGAH DOKUMEN SEKARANG
             </Button>
           </div>
         </Card>
 
         {/* Subscription Status */}
-        <Card className="md:col-span-1 border border-border shadow-sm p-4 md:p-5 relative overflow-hidden flex flex-col rounded-xl bg-card">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-amber-500" />
-            <span className="text-xs font-space text-amber-500 uppercase font-bold tracking-widest">Premium</span>
+        <Card className="md:col-span-1 border border-border shadow-sm p-4 md:p-5 relative overflow-hidden flex flex-col rounded-xl bg-card gap-2">
+          <div className="flex items-center gap-4">
+            <CreditCard className="w-5 h-5 text-amber-400" />
+            <span className="text-md font-space text-amber-500 uppercase font-bold tracking-widest">Subscription</span>
           </div>
-          <h2 className="text-sm font-inter font-medium text-foreground leading-relaxed mt-2">
-            Anda menggunakan paket <span className="font-bold text-primary">{isB2B ? 'B2B Profesional' : 'B2C Esensial'}</span>. 
+          <h2 className="text-sm font-inter font-medium text-foreground leading-relaxed my-2">
+            Anda menggunakan paket <span className="font-bold text-primary">{isB2B ? 'B2B Profesional' : 'B2C Esensial'}</span>. <br/>
             {isB2B ? ' Nikmati pemindaian tak terbatas dan fitur analitik mendalam.' : ' Akses terbatas untuk pemindaian.'}
           </h2>
-          <div className="space-y-3 bg-muted/50 p-4 rounded-lg mt-4">
+          <div className="space-y-3 bg-muted/50 p-3 mt-4 border-l-4 border-solid border-primary">
             <div className="flex justify-between items-center text-sm font-inter">
               <span className="text-muted-foreground">Sisa Kuota:</span>
               <span className="font-bold text-foreground">{isB2B ? 'Tak Terbatas' : '3 / Bulan'}</span>
@@ -150,7 +178,7 @@ export function Dashboard() {
             </div>
           </div>
           <div className="mt-auto pt-4">
-            <Button onClick={() => navigate('/pricing')} variant="outline" className="w-full rounded-md font-space text-xs uppercase tracking-widest h-11 border-border shadow-sm hover:bg-muted">
+            <Button onClick={() => navigate('/pricing')} className="w-full rounded-md font-space text-xs font-bold uppercase tracking-widest h-11 bg-amber-500 hover:bg-amber-600 text-white cursor-pointer">
               Kelola Paket
             </Button>
           </div>
@@ -162,7 +190,7 @@ export function Dashboard() {
         
         {/* Recent Contracts */}
         <div className="xl:col-span-2 space-y-5">
-          <h3 className="text-2xl font-playfair text-foreground font-bold tracking-tight">Aktivitas Terkini</h3>
+          <h3 className="text-2xl font-instrument text-foreground tracking-tight">Aktivitas Terkini</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             
             {recentDocuments.map((doc) => (
@@ -201,7 +229,7 @@ export function Dashboard() {
         {/* Queue */}
         <div className="space-y-5">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-playfair text-foreground font-bold tracking-tight">Antrean Pemindaian</h3>
+            <h3 className="text-2xl font-instrument text-foreground tracking-tight">Antrean Pemindaian</h3>
           </div>
           
           <div className="space-y-3">

@@ -6,7 +6,7 @@ export function BottomNav() {
 
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Editor', path: '/editor/1', icon: FileEdit },
+    { name: 'Editor', path: '/editor', icon: FileEdit },
     { name: 'Scanner', path: '/scanner', icon: ShieldAlert },
     { name: 'Pricing', path: '/pricing', icon: CreditCard },
   ]

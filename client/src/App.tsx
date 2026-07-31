@@ -6,6 +6,7 @@ import { MainLayout } from './components/layout/MainLayout'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
+import { EditorList } from './pages/EditorList'
 import { ContractEditor } from './pages/ContractEditor'
 import { RiskScanner } from './pages/RiskScanner'
 import { RiskResults } from './pages/RiskResults'
@@ -26,6 +27,7 @@ function App() {
             <Route element={<PrivateRoute />}>
               <Route element={<MainLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/editor" element={<EditorList />} />
                 <Route path="/editor/:id" element={<ContractEditor />} />
                 <Route path="/results/:id" element={<RiskResults />} />
                 <Route path="/scanner" element={<RiskScanner />} />

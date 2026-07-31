@@ -13,7 +13,7 @@ export function Topbar() {
     <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur h-16 shrink-0 flex items-center justify-between px-4 lg:px-8">
       {/* Mobile Logo */}
       <Link to="/" className="md:hidden flex items-center gap-2">
-        <div className="w-8 h-8 bg-primary text-primary-foreground flex items-center justify-center font-playfair font-bold text-xl rounded-sm">
+        <div className="w-8 h-8 bg-primary text-primary-foreground flex items-center justify-center font-instrument text-2xl rounded-sm">
           K
         </div>
       </Link>

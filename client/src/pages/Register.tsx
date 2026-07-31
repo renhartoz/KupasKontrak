@@ -57,7 +57,7 @@ export function Register() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md p-8 border border-border shadow-sm rounded-xl">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-playfair text-primary font-bold tracking-tight">Daftar Akun</h1>
+          <h1 className="text-3xl font-instrument text-primary tracking-tight">Daftar Akun</h1>
           <p className="text-sm font-inter text-muted-foreground mt-2">Mulai analisis kontrak Anda dengan AI</p>
         </div>
 

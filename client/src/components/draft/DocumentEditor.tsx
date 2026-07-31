@@ -1,8 +1,24 @@
-import { Bold, Italic, Underline, Link, AlignLeft, Search, Download, Trash2, ShieldAlert } from 'lucide-react'
+import { Download, ShieldAlert, FileText } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/api'
 
-export function DocumentEditor() {
+interface DocumentEditorProps {
+  document: any
+  selectedClauseId: string | null
+  onSelectClause: (id: string | null) => void
+}
+
+export function DocumentEditor({ document, selectedClauseId, onSelectClause }: DocumentEditorProps) {
+  const { data: clauses = [], isLoading } = useQuery({
+    queryKey: ['clauses', document.id],
+    queryFn: async () => {
+      const res = await api.get(`/audits/documents/${document.id}/clauses/`)
+      return res.data.results ? res.data.results : res.data
+    }
+  })
+
   return (
     <Card className="h-full bg-card flex flex-col relative overflow-hidden border-none rounded-none shadow-none">
       
@@ -11,96 +27,99 @@ export function DocumentEditor() {
         <div className="max-w-3xl mx-auto bg-card min-h-[1056px] shadow-sm border border-border p-8 sm:p-12 lg:p-16 text-foreground relative rounded-sm">
           
           {/* Header Metas */}
-          <div className="flex justify-between items-center text-[10px] font-space text-muted-foreground uppercase tracking-widest font-bold mb-16">
-            <span>ID: REQ-3829-892</span>
-            <span>DRAF v2.1</span>
+          <div className="flex justify-between items-center text-[10px] font-space text-muted-foreground uppercase tracking-widest font-bold mb-16 border-b border-border pb-4">
+            <span>ID: {document.id.substring(0, 12)}</span>
+            <span>{document.original_filename}</span>
           </div>
 
           {/* Document Content */}
           <div className="space-y-8">
-            <h1 className="text-4xl md:text-5xl font-playfair text-primary font-bold text-center leading-tight mb-16 tracking-tight">
-              PERJANJIAN<br/>LAYANAN<br/>INDUK
+            <h1 className="text-4xl md:text-5xl font-instrument text-primary text-center leading-tight mb-16 tracking-tight">
+              {document.original_filename.replace('.pdf', '').replace('.docx', '').replace(/_/g, ' ')}
             </h1>
 
-            <div>
-              <h2 className="text-xl font-playfair font-bold mb-4 uppercase text-foreground">1. Definisi</h2>
-              <p className="text-sm font-inter text-muted-foreground leading-relaxed mb-4 text-justify">
-                "Perjanjian" berarti Perjanjian Layanan Induk ini, bersama dengan Pernyataan Kerja (SOW), 
-                lampiran, jadwal, atau adendum apa pun yang terlampir padanya atau dilaksanakan oleh Para Pihak yang merujuk pada Perjanjian ini.
-              </p>
-              <p className="text-sm font-inter text-muted-foreground leading-relaxed mb-4 text-justify">
-                "Informasi Rahasia" berarti setiap informasi non-publik yang diungkapkan oleh salah satu Pihak ("Pihak Pengungkap") 
-                kepada Pihak lainnya ("Pihak Penerima") yang ditetapkan sebagai rahasia atau yang sepatutnya 
-                dipahami sebagai rahasia mengingat sifat informasi dan keadaan pengungkapannya.
-              </p>
-            </div>
-
-            <div className="relative">
-              {/* Highlight indicator icon */}
-              <div className="absolute -left-12 top-0 text-destructive bg-destructive/10 p-1 rounded-sm opacity-80 hidden sm:block">
-                <ShieldAlert className="w-5 h-5" />
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20 text-muted-foreground">
+                <span className="font-space uppercase tracking-widest text-xs font-bold animate-pulse">Memuat Klausul...</span>
               </div>
-              <div className="bg-destructive/5 border-l-4 border-destructive p-5 sm:p-6 -mx-5 sm:-mx-6 rounded-r-md">
-                <h2 className="text-lg font-playfair font-bold mb-3 uppercase text-destructive">2. Batasan Tanggung Jawab</h2>
-                <p className="text-sm font-inter leading-relaxed text-destructive font-medium">
-                  KERUGIAN KONSEKUENSIAL ATAU PENGHUKUMAN; ATAU KERUGIAN ATAS HILANGNYA KEUNTUNGAN, PENDAPATAN...
-                </p>
+            ) : clauses.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <FileText className="w-12 h-12 text-muted-foreground mb-4" />
+                <p className="text-sm font-inter text-muted-foreground">Tidak ada klausul yang terdeteksi.</p>
               </div>
-            </div>
+            ) : (
+              clauses.map((clause: any) => {
+                const isSelected = selectedClauseId === clause.id
+                const isHighRisk = clause.risk_level === 'high'
+                
+                return (
+                  <div 
+                    key={clause.id} 
+                    className="relative cursor-pointer group"
+                    onClick={() => onSelectClause(clause.id)}
+                  >
+                    {/* Highlight indicator icon */}
+                    {isHighRisk && (
+                      <div className="absolute -left-12 top-0 text-destructive bg-destructive/10 p-1 rounded-sm hidden sm:block opacity-70 group-hover:opacity-100 transition-opacity">
+                        <ShieldAlert className="w-5 h-5" />
+                      </div>
+                    )}
+                    
+                    <div className={`p-5 sm:p-6 -mx-5 sm:-mx-6 rounded-md transition-colors ${
+                      isSelected 
+                        ? (isHighRisk ? 'bg-destructive/10 border-l-4 border-destructive' : 'bg-primary/10 border-l-4 border-primary') 
+                        : (isHighRisk ? 'bg-destructive/5 border-l-2 border-destructive/50 hover:bg-destructive/10' : 'hover:bg-muted/50 border-l-2 border-transparent hover:border-border')
+                    }`}>
+                      <h2 className={`text-xl font-instrument mb-3 uppercase ${isHighRisk ? 'text-destructive' : 'text-primary'}`}>
+                        {clause.category || 'Klausul'}
+                        <span className="ml-3 text-[10px] font-space text-muted-foreground tracking-widest">
+                          SKOR: {clause.clause_safety_score}/100
+                        </span>
+                      </h2>
+                      <p className={`text-sm font-inter leading-relaxed ${isHighRisk ? 'text-destructive font-medium' : 'text-foreground'}`}>
+                        {clause.clause_text}
+                      </p>
+                      
+                      {isSelected && clause.plain_language_summary && (
+                        <div className="mt-4 p-4 bg-background border border-border rounded-md shadow-sm">
+                          <h4 className="text-[10px] font-space uppercase tracking-widest font-bold text-muted-foreground mb-2">Ringkasan AI:</h4>
+                          <p className="text-sm font-inter text-foreground italic">{clause.plain_language_summary}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })
+            )}
             
           </div>
         </div>
       </div>
 
       {/* Floating Toolbar */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-card border border-border shadow-md p-1.5 flex flex-wrap items-center justify-center gap-1 z-10 rounded-lg w-full max-w-sm sm:max-w-max">
-        
-        <Button variant="ghost" size="icon" className="w-8 h-8 rounded text-foreground hover:bg-muted">
-          <span className="font-bold font-playfair text-sm">H1</span>
-        </Button>
-        <Button variant="ghost" size="icon" className="w-8 h-8 rounded text-foreground hover:bg-muted">
-          <span className="font-bold font-playfair text-sm">H2</span>
-        </Button>
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-card border border-border shadow-md p-2 flex items-center justify-center gap-4 z-10 rounded-lg w-full max-w-sm sm:max-w-max">
+        <span className="text-xs font-space text-muted-foreground uppercase tracking-widest font-bold px-2">
+          Mode Baca Saja (Analisis AI)
+        </span>
         <div className="w-px h-6 bg-border mx-1"></div>
-
-        <Button variant="ghost" size="icon" className="w-8 h-8 rounded text-primary bg-primary/10 hover:bg-primary/20">
-          <Bold className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="w-8 h-8 rounded text-foreground hover:bg-muted">
-          <Italic className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="w-8 h-8 rounded text-foreground hover:bg-muted">
-          <Underline className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="w-8 h-8 rounded text-foreground hover:bg-muted">
-          <AlignLeft className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="w-8 h-8 rounded text-foreground hover:bg-muted">
-          <Link className="w-4 h-4" />
-        </Button>
-        <div className="w-px h-6 bg-border mx-1 hidden sm:block"></div>
-        
-        <div className="hidden sm:flex items-center gap-2 px-2 text-[10px] font-space text-primary font-semibold tracking-widest uppercase">
-          <Button variant="ghost" size="icon" className="w-6 h-6 rounded text-muted-foreground hover:text-primary p-0 hover:bg-muted">
-            {'<'}
-          </Button>
-          <span>5 dari 14</span>
-          <Button variant="ghost" size="icon" className="w-6 h-6 rounded text-muted-foreground hover:text-primary p-0 hover:bg-muted">
-            {'>'}
-          </Button>
-        </div>
-
-        <div className="w-px h-6 bg-border mx-1"></div>
-        <Button variant="ghost" size="icon" className="w-8 h-8 rounded text-foreground hover:bg-muted">
-          <Search className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="w-8 h-8 rounded text-foreground hover:bg-muted">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-foreground hover:bg-muted font-space text-[10px] tracking-widest uppercase flex gap-2"
+          onClick={async () => {
+             try {
+                const res = await api.post(`/documents/${document.id}/export/`, { format: 'pdf' })
+                if (res.data?.download_url) {
+                   window.open(res.data.download_url, '_blank')
+                }
+             } catch (e) {
+                alert('Gagal mengekspor dokumen atau fitur ini memerlukan paket Pro B2B.')
+             }
+          }}
+        >
           <Download className="w-4 h-4" />
+          Ekspor
         </Button>
-        <Button variant="ghost" size="icon" className="w-8 h-8 rounded text-destructive hover:bg-destructive hover:text-destructive-foreground">
-          <Trash2 className="w-4 h-4" />
-        </Button>
-
       </div>
 
     </Card>

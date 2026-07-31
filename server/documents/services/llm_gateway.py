@@ -138,14 +138,14 @@ def _parse_and_validate(response_json: dict) -> AnalysisResult:
         clause_text = item.get("clause_text", "")
         if not clause_text:
             continue
-        score = item.get("clause_safety_score", 3)
-        is_flagged = item.get("is_flagged", int(score) <= 3)
         analyzed.append(
             AnalyzedClause(
                 id=c_id,
                 clause_text=clause_text,
-                is_flagged=is_flagged,
-                clause_safety_score=score,
+                is_fatal=item.get("is_fatal", False),
+                s1_score=item.get("s1_score", 3),
+                s2_score=item.get("s2_score", 3),
+                s3_score=item.get("s3_score", 3),
                 category=item.get("category", "default"),
                 plain_language_summary=item.get(
                     "plain_language_summary", clause_text
@@ -191,13 +191,16 @@ def analyze_contract(raw_text: str) -> AnalysisResult:
                 "temperature": 0.2,
             }
             resp = requests.post(endpoint, headers=headers, json=payload, timeout=45)
-            resp.raise_for_status()
+            if resp.status_code != 200:
+                last_error = f"HTTP {resp.status_code}: {resp.text}"
+                continue
+                
             data = resp.json()
             content_str = data["choices"][0]["message"]["content"]
             parsed_json = json.loads(content_str)
             return _parse_and_validate(parsed_json)
         except Exception as exc:
-            last_error = exc
+            last_error = f"Exception: {str(exc)}"
             continue
 
     raise AllModelsFailedError(

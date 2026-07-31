@@ -69,17 +69,22 @@ def process_document(self, document_id: str):
         ClauseFinding.objects.filter(document=document).delete()
         saved_clauses = []
         for idx, item in enumerate(analysis_result.clauses):
+            clause_pk = f"{str(document.id).split('-')[0][:8]}-{item.id}"[:16]
             finding = ClauseFinding.objects.create(
-                id=item.id,
+                id=clause_pk,
                 document=document,
                 clause_text=item.clause_text,
+                is_fatal=item.is_fatal,
+                s1_score=item.s1_score,
+                s2_score=item.s2_score,
+                s3_score=item.s3_score,
                 clause_safety_score=item.clause_safety_score,
                 category=item.category,
                 risk_level=item.risk_level,
                 plain_language_summary=item.plain_language_summary,
-                mcp_query_hint=item.mcp_query_hint,
                 order_index=idx,
             )
+            finding.mcp_query_hint = item.mcp_query_hint
             saved_clauses.append(finding)
             if item.is_flagged:
                 _emit_audit_event(

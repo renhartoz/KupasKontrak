@@ -8,7 +8,7 @@ export function Settings() {
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
       <header className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-playfair text-primary font-bold mb-2 tracking-tight">Pengaturan Profil</h1>
+        <h1 className="text-3xl md:text-4xl font-instrument text-primary mb-2 tracking-tight">Pengaturan Profil</h1>
         <p className="text-sm font-inter text-muted-foreground">
           Kelola informasi akun dan preferensi berlangganan Anda.
         </p>
@@ -62,7 +62,7 @@ export function Settings() {
           </h2>
           
           <div className="text-center py-6">
-            <p className="text-2xl font-playfair font-bold text-primary mb-2 capitalize">
+            <p className="text-3xl font-instrument text-primary mb-2 capitalize">
               {user?.tier?.replace('_', ' ') || 'Esensial'}
             </p>
             <p className="text-sm font-inter text-muted-foreground">

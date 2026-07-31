@@ -44,10 +44,10 @@ export function Login() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md p-8 border border-border shadow-sm rounded-xl">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-primary text-primary-foreground mx-auto flex items-center justify-center font-playfair font-bold text-2xl rounded-md mb-4">
+          <div className="w-12 h-12 bg-primary text-primary-foreground mx-auto flex items-center justify-center font-instrument text-3xl rounded-md mb-4">
             K
           </div>
-          <h1 className="text-3xl font-playfair text-primary font-bold tracking-tight">Selamat Datang</h1>
+          <h1 className="text-3xl font-instrument text-primary tracking-tight">Selamat Datang</h1>
           <p className="text-sm font-inter text-muted-foreground mt-2">Masuk ke akun KupasKontrak Anda</p>
         </div>
 

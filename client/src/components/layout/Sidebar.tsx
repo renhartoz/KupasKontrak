@@ -9,7 +9,7 @@ export function Sidebar() {
 
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Editor', path: '/editor/1', icon: FileEdit },
+    { name: 'Editor', path: '/editor', icon: FileEdit },
     { name: 'Scanner', path: '/scanner', icon: ShieldAlert },
     { name: 'Pricing', path: '/pricing', icon: CreditCard },
   ]
@@ -18,10 +18,10 @@ export function Sidebar() {
     <aside className="hidden md:flex flex-col w-64 h-screen border-r border-border bg-card/95 backdrop-blur shrink-0">
       <div className="p-6">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary text-primary-foreground flex items-center justify-center font-playfair font-bold text-xl rounded-sm">
+          <div className="w-8 h-8 bg-primary text-primary-foreground flex items-center justify-center font-instrument text-2xl rounded-sm">
             K
           </div>
-          <span className="font-playfair font-bold text-xl text-foreground tracking-tight">
+          <span className="font-instrument text-2xl text-foreground tracking-tight">
             KupasKontrak
           </span>
         </Link>

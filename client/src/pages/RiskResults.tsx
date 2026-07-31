@@ -1,209 +1,314 @@
-import { AlertTriangle, Lightbulb, MapPin } from 'lucide-react'
+import { AlertTriangle, Lightbulb, MapPin, Loader2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { SecurePdfViewer } from '@/components/audit-result/SecurePdfViewer'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/api'
+import { useState } from 'react'
 
 export function RiskResults() {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const [selectedHighlight, setSelectedHighlight] = useState<string | null>(null)
+
+  const { data: document, isLoading: isLoadingDoc } = useQuery({
+    queryKey: ['document', id],
+    queryFn: async () => {
+      const res = await api.get(`/documents/${id}/`)
+      return res.data
+    }
+  })
+
+  const { data: clauses = [], isLoading: isLoadingClauses } = useQuery({
+    queryKey: ['clauses', id],
+    queryFn: async () => {
+      const res = await api.get(`/audits/documents/${id}/clauses/`)
+      return res.data.results ? res.data.results : res.data
+    },
+    enabled: !!id
+  })
+
+  if (isLoadingDoc || isLoadingClauses) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-100px)]">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+      </div>
+    )
+  }
+
+  if (!document) return <div className="p-8 text-center">Dokumen tidak ditemukan.</div>
+
+  const score = document.overall_risk_score || 0
+  const isHighRisk = score >= 70
+  const isMediumRisk = score >= 40 && score < 70
+  const isLowRisk = score < 40
+
+  const highRiskClauses = clauses.filter((c: any) => c.clause_safety_score <= 2)
+  const mediumRiskClauses = clauses.filter((c: any) => c.clause_safety_score === 3)
+  
+  const activeClause = selectedHighlight ? clauses.find((c: any) => c.id === selectedHighlight) : (highRiskClauses[0] || mediumRiskClauses[0] || clauses[0])
+
+  // Aggregate category stats
+  const categoryStats = clauses.reduce((acc: any, clause: any) => {
+    const cat = clause.category || 'default'
+    if (!acc[cat]) {
+      acc[cat] = { count: 0, highRiskCount: 0, sumScore: 0 }
+    }
+    acc[cat].count++
+    acc[cat].sumScore += clause.clause_safety_score
+    if (clause.clause_safety_score <= 2) {
+      acc[cat].highRiskCount++
+    }
+    return acc
+  }, {})
+
+  const radius = 40
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = circumference - (score / 100) * circumference
+  const strokeColor = isHighRisk ? 'text-destructive' : (isMediumRisk ? 'text-amber-500' : 'text-emerald-500')
+  const bgColor = isHighRisk ? 'bg-destructive/10 text-destructive' : (isMediumRisk ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500')
+
   return (
-    <div className="max-w-7xl mx-auto space-y-10 animate-fade-in py-8">
+    <div className="max-w-7xl mx-auto space-y-10 animate-fade-in py-8 px-4 sm:px-6">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 border-b border-border pb-6">
         <div>
-          <h1 className="text-display-sm font-playfair text-primary font-bold mb-2">Hasil Pemindaian</h1>
-          <p className="text-body-md font-inter text-muted-foreground max-w-xl">
-            Analisis risiko detail untuk Master_Service_Agreement_v2.pdf. Tinjau klausul yang disorot dan saran tindakan.
+          <h1 className="text-3xl md:text-4xl font-instrument text-primary mb-2">Hasil Pemindaian</h1>
+          <p className="text-sm font-inter text-muted-foreground max-w-xl">
+            Analisis risiko detail untuk <span className="font-bold text-foreground">{document.original_filename}</span>.
           </p>
         </div>
         <div className="flex items-center gap-4 shrink-0">
-          <Button variant="outline" className="border-border text-foreground hover:bg-muted font-inter">
+          <Button variant="outline" className="border-border text-foreground hover:bg-muted font-space text-xs tracking-widest uppercase rounded-md shadow-sm">
             Ekspor Laporan
           </Button>
-          <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-inter">
+          <Button onClick={() => navigate(`/editor/${id}`)} className="bg-primary text-primary-foreground hover:bg-primary/90 font-space text-xs tracking-widest uppercase rounded-md shadow-sm">
             Buka di Editor
           </Button>
         </div>
       </div>
 
-      {/* Split Section: Overall Score & PDF Viewer */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[600px]">
+      {/* Split Section: Overall Score & Highlights */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
         {/* Left: Overall Score */}
-        <Card className="lg:col-span-4 bg-card border-border shadow-sm p-8 flex flex-col items-center rounded-xl">
-          <p className="text-label-sm font-space text-on-surface-variant uppercase tracking-widest font-bold mb-8 self-start">Skor Risiko Keseluruhan</p>
+        <Card className="lg:col-span-4 bg-card border border-border shadow-sm p-8 flex flex-col items-center rounded-xl relative overflow-hidden">
+          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
+          
+          <p className="text-xs font-space text-muted-foreground uppercase tracking-widest font-bold mb-8 self-start">
+            Skor Risiko Keseluruhan
+          </p>
           
           <div className="relative w-48 h-48 mb-8 flex items-center justify-center">
-            {/* Mock Donut Chart */}
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-surface-variant)" strokeWidth="10" />
-              <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-error)" strokeWidth="10" strokeDasharray="251" strokeDashoffset="70" strokeLinecap="round" />
+              <circle cx="50" cy="50" r="40" fill="transparent" stroke="currentColor" className="text-muted" strokeWidth="8" />
+              <circle 
+                cx="50" cy="50" r="40" fill="transparent" 
+                stroke="currentColor" 
+                className={`${strokeColor} transition-all duration-1000 ease-out`}
+                strokeWidth="8" 
+                strokeDasharray={circumference} 
+                strokeDashoffset={strokeDashoffset} 
+                strokeLinecap="round" 
+              />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-display-sm font-playfair font-bold text-on-surface">72</span>
-              <span className="text-body-sm font-inter text-on-surface-variant border-t border-outline-variant pt-1">/ 100</span>
+              <span className="text-5xl font-instrument text-foreground">{score}</span>
+              <span className="text-xs font-inter text-muted-foreground border-t border-border pt-1 mt-1">/ 100</span>
             </div>
           </div>
 
-          <div className="bg-error-container text-error px-6 py-2 flex items-center gap-2 mb-6">
+          <div className={`px-6 py-2 flex items-center gap-2 mb-6 rounded-md ${bgColor}`}>
             <AlertTriangle className="w-4 h-4" />
-            <span className="text-label-sm font-space uppercase tracking-widest font-bold">Risiko Tinggi</span>
+            <span className="text-[10px] font-space uppercase tracking-widest font-bold">
+              {isHighRisk ? 'Risiko Tinggi' : (isMediumRisk ? 'Risiko Sedang' : 'Risiko Rendah')}
+            </span>
           </div>
 
-          <p className="text-body-sm font-inter text-on-surface-variant text-center mb-8 leading-relaxed">
-            Kontrak ini mengandung klausul kritis yang mengekspos perusahaan Anda pada kewajiban hukum yang signifikan dan kondisi pengakhiran yang ambigu.
+          <p className="text-sm font-inter text-muted-foreground text-center mb-8 leading-relaxed px-4">
+            {document.score_breakdown?.fatal_clauses_count > 0 
+              ? `Terdapat ${document.score_breakdown.fatal_clauses_count} klausul kritis yang melanggar hukum secara mutlak.`
+              : 'Analisis AI telah selesai mengkategorikan dan menilai setiap klausul dalam dokumen ini.'}
           </p>
 
-          <div className="w-full space-y-3 mt-auto">
+          <div className="w-full space-y-4 mt-auto border-t border-border pt-6">
             <div className="flex items-center justify-between">
-              <span className="text-body-sm font-inter text-on-surface">Masalah Eksploitatif</span>
-              <div className="w-6 h-6 rounded-full bg-error text-white flex items-center justify-center text-label-sm font-bold">1</div>
+              <span className="text-sm font-inter text-foreground">Klausul Kritis / Ilegal</span>
+              <div className="w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs font-bold font-space">
+                {document.score_breakdown?.fatal_clauses_count || 0}
+              </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-body-sm font-inter text-on-surface">Klausul Ambigu</span>
-              <div className="w-6 h-6 rounded-full bg-secondary text-white flex items-center justify-center text-label-sm font-bold">3</div>
+              <span className="text-sm font-inter text-foreground">Klausul Risiko Sedang</span>
+              <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold font-space">
+                {mediumRiskClauses.length}
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-inter text-foreground">Total Klausul Diekstrak</span>
+              <div className="w-6 h-6 rounded-full bg-muted text-foreground flex items-center justify-center text-xs font-bold font-space">
+                {clauses.length}
+              </div>
             </div>
           </div>
         </Card>
 
-        {/* Right: PDF Viewer */}
-        <div className="lg:col-span-8 h-full">
-          <SecurePdfViewer signedUrl="mock-url" title="Master Service Agreement.pdf" />
-        </div>
-      </div>
-
-      {/* Your Obligations at a Glance */}
-      <div>
-        <h2 className="text-headline-md font-playfair text-primary font-bold mb-6">Sekilas Kewajiban Anda</h2>
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        {/* Right: Dynamic Highlights instead of PDF Viewer */}
+        <div className="lg:col-span-8 flex flex-col h-full min-h-[600px]">
+          <h2 className="text-2xl font-instrument text-primary mb-6">Sekilas Temuan Utama</h2>
           
-          {/* Left Tabs */}
-          <div className="md:col-span-4 flex flex-col gap-3">
-            <div className="bg-card border border-border border-l-4 border-l-destructive shadow-sm p-4 cursor-pointer relative rounded-r-lg">
-              <h3 className="text-body-md font-bold font-inter text-on-surface mb-1">Ganti Rugi Tanpa Batas</h3>
-              <p className="text-body-sm font-inter text-on-surface-variant line-clamp-2">
-                Bagian 2.1 membuka kemungkinan perusahaan Anda menghadapi kerugian tak terbatas dari pihak ketiga...
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full flex-1">
+            {/* Clause Tabs */}
+            <div className="md:col-span-5 flex flex-col gap-3 overflow-y-auto max-h-[600px] pr-2">
+              {highRiskClauses.length === 0 && mediumRiskClauses.length === 0 && (
+                 <div className="text-sm text-muted-foreground p-4">Tidak ada klausul berisiko signifikan ditemukan.</div>
+              )}
+              {[...highRiskClauses, ...mediumRiskClauses].slice(0, 5).map((clause: any) => {
+                const isActive = activeClause?.id === clause.id
+                const isHigh = clause.clause_safety_score <= 2
+                
+                return (
+                  <div 
+                    key={clause.id}
+                    onClick={() => setSelectedHighlight(clause.id)}
+                    className={`bg-card border shadow-sm p-4 cursor-pointer relative rounded-r-lg transition-all ${
+                      isActive 
+                        ? `border-${isHigh ? 'destructive' : 'amber-500'} border-l-4` 
+                        : `border-border border-l-4 border-l-transparent hover:border-l-primary/30 opacity-70 hover:opacity-100`
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-[10px] font-space uppercase tracking-widest font-bold ${isHigh ? 'text-destructive' : 'text-amber-500'}`}>
+                        Skor: {clause.clause_safety_score}/5
+                      </span>
+                      <span className="text-[10px] font-space uppercase tracking-widest font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                        {clause.category.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <p className="text-sm font-inter text-foreground line-clamp-3 leading-relaxed">
+                      {clause.clause_text}
+                    </p>
+                  </div>
+                )
+              })}
             </div>
-            
-            <div className="bg-muted border-l-4 border-l-secondary shadow-sm p-4 cursor-pointer opacity-70 hover:opacity-100 transition-opacity rounded-r-lg">
-              <h3 className="text-body-md font-bold font-inter text-foreground mb-1">Periode Pemulihan Pendek</h3>
-              <p className="text-body-sm font-inter text-on-surface-variant line-clamp-2">
-                5 hari untuk memulihkan pelanggaran material sangat tidak lazim dan menyulitkan secara operasional...
-              </p>
+
+            {/* Active Clause Detail */}
+            <div className="md:col-span-7 h-full">
+              {activeClause ? (
+                <Card className="bg-card shadow-sm p-6 sm:p-8 border-border rounded-xl h-full flex flex-col overflow-y-auto">
+                  <div className={`flex items-center gap-2 mb-6 ${activeClause.clause_safety_score <= 2 ? 'text-destructive' : 'text-amber-500'}`}>
+                    <AlertTriangle className="w-4 h-4" />
+                    <span className="text-[10px] font-space uppercase tracking-widest font-bold">
+                      {activeClause.is_fatal ? 'Ilegal (Melanggar Hukum)' : (activeClause.clause_safety_score <= 2 ? 'Risiko Tinggi' : 'Risiko Sedang')}
+                    </span>
+                  </div>
+                  
+                  <div className="mb-6 bg-muted/30 p-4 rounded-md border-l-2 border-primary">
+                    <p className="text-sm font-inter leading-relaxed text-foreground italic">
+                      "{activeClause.clause_text}"
+                    </p>
+                  </div>
+                  
+                  <div className="bg-primary/5 p-6 rounded-lg mb-6 border border-primary/10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-md bg-primary/20 text-primary flex items-center justify-center">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <h4 className="text-sm font-bold font-inter text-foreground">Analisis AI</h4>
+                    </div>
+                    <p className="text-sm font-inter text-muted-foreground leading-relaxed ml-11">
+                      {activeClause.plain_language_summary || 'AI mengindikasikan adanya ketidakseimbangan hak yang signifikan atau parameter finansial yang tidak transparan pada pasal ini.'}
+                    </p>
+                  </div>
+
+                  <div className="bg-secondary/5 p-6 rounded-lg mb-6 border border-secondary/10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-md bg-secondary/20 text-secondary flex items-center justify-center">
+                        <Lightbulb className="w-4 h-4" />
+                      </div>
+                      <h4 className="text-sm font-bold font-inter text-foreground">Saran Tindakan</h4>
+                    </div>
+                    <p className="text-sm font-inter text-muted-foreground leading-relaxed ml-11 mb-4">
+                      {activeClause.mcp_query_hint ? `Referensi hukum disarankan: ${activeClause.mcp_query_hint}` : 'Gunakan Editor untuk berdiskusi dengan AI dan meminta draf perbaikan yang lebih seimbang.'}
+                    </p>
+                    <div className="ml-11 mt-4">
+                      <Button onClick={() => navigate(`/editor/${id}`)} className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-space text-[10px] uppercase tracking-widest rounded-md h-9">
+                        Bawa ke Editor <ArrowRight className="w-3 h-3 ml-2" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ) : (
+                <div className="flex items-center justify-center h-full border border-dashed border-border rounded-xl">
+                  <span className="text-sm font-inter text-muted-foreground">Pilih klausul di sebelah kiri</span>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Right Detail */}
-          <div className="md:col-span-8">
-            <Card className="bg-card shadow-sm p-8 border-border rounded-xl">
-              <div className="flex items-center gap-2 text-destructive mb-4">
-                <AlertTriangle className="w-4 h-4" />
-                <span className="text-label-sm font-space uppercase tracking-widest font-bold">Risiko Tinggi</span>
-              </div>
-              
-              <h3 className="text-headline-md font-playfair font-bold text-on-surface mb-8">Ganti Rugi Tanpa Batas</h3>
-              
-              {/* How it will play out */}
-              <div className="bg-primary-fixed-dim/20 p-6 mb-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 bg-primary text-white flex items-center justify-center">
-                    <MapPin className="w-4 h-4" />
-                  </div>
-                  <h4 className="text-body-lg font-bold font-inter text-primary">Apa dampaknya</h4>
-                </div>
-                <p className="text-body-md font-inter text-primary/90 leading-relaxed ml-11">
-                  Jika pihak ketiga menuntut Klien dengan klaim bahwa perangkat lunak Anda melanggar paten mereka, Anda diwajibkan untuk menanggung semua biaya hukum, penyelesaian, dan ganti rugi tanpa batas maksimal secara finansial. Ini bisa dengan mudah melebihi total nilai kontrak.
-                </p>
-              </div>
-
-              {/* Recommended Action */}
-              <div className="bg-secondary-fixed-dim/20 p-6 mb-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 bg-secondary text-white flex items-center justify-center">
-                    <Lightbulb className="w-4 h-4" />
-                  </div>
-                  <h4 className="text-body-lg font-bold font-inter text-secondary">Tindakan Disarankan</h4>
-                </div>
-                <p className="text-body-md font-inter text-secondary/90 leading-relaxed ml-11 mb-4">
-                  Usulkan amandemen untuk membatasi kewajiban ganti rugi maksimal sebesar total biaya yang dibayarkan dalam 12 bulan terakhir, atau jumlah tetap yang disepakati bersama (misalnya $1M), yang tercakup oleh asuransi kewajiban siber Anda.
-                </p>
-                <div className="ml-11">
-                  <Button className="bg-secondary text-white hover:bg-secondary/90 font-inter text-label-sm uppercase tracking-widest rounded-none">
-                    Terapkan Saran AI ke Editor
-                  </Button>
-                </div>
-              </div>
-
-              <label className="flex items-center gap-3 cursor-pointer mt-8">
-                <input type="checkbox" className="w-5 h-5 border-outline-variant rounded-none text-primary focus:ring-primary" />
-                <span className="text-body-md font-inter text-on-surface-variant">Tandai sudah diselesaikan</span>
-              </label>
-
-            </Card>
-          </div>
-
         </div>
       </div>
 
       {/* Risk Category Breakdown */}
       <div>
-        <h2 className="text-headline-md font-playfair text-primary font-bold mb-6">Rincian Kategori Risiko</h2>
+        <h2 className="text-2xl font-instrument text-primary mb-6 mt-12">Rincian Kategori Risiko</h2>
         <div className="bg-card shadow-sm overflow-hidden rounded-xl border border-border">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-muted text-foreground font-space text-label-sm uppercase tracking-widest">
-                <th className="py-4 px-6 font-bold">Kategori</th>
-                <th className="py-4 px-6 font-bold text-center">Tingkat Risiko</th>
-                <th className="py-4 px-6 font-bold text-center">Skor</th>
-                <th className="py-4 px-6 font-bold">Kekhawatiran Utama</th>
-              </tr>
-            </thead>
-            <tbody className="font-inter text-body-sm text-foreground">
-              <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                <td className="py-5 px-6 font-bold flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-error"></div>
-                  Liabilitas
-                </td>
-                <td className="py-5 px-6 text-center">
-                  <span className="inline-block bg-error-container text-error px-3 py-1 font-space text-label-sm font-bold tracking-widest uppercase">Tinggi</span>
-                </td>
-                <td className="py-5 px-6 text-center text-error font-bold text-body-lg">88</td>
-                <td className="py-5 px-6 text-on-surface-variant">Ganti rugi tanpa batas; batasan tanggung jawab asimetris yang menguntungkan Klien.</td>
-              </tr>
-              <tr className="border-b border-outline-variant hover:bg-surface-variant/50 transition-colors">
-                <td className="py-5 px-6 font-bold flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-secondary"></div>
-                  Kekayaan Intelektual
-                </td>
-                <td className="py-5 px-6 text-center">
-                  <span className="inline-block bg-secondary-container text-secondary px-3 py-1 font-space text-label-sm font-bold tracking-widest uppercase">Sedang</span>
-                </td>
-                <td className="py-5 px-6 text-center text-secondary font-bold text-body-lg">65</td>
-                <td className="py-5 px-6 text-on-surface-variant">Definisi samar mengenai kepemilikan IP pra-ada vs hasil kerja.</td>
-              </tr>
-              <tr className="border-b border-outline-variant hover:bg-surface-variant/50 transition-colors">
-                <td className="py-5 px-6 font-bold flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-secondary"></div>
-                  Pengakhiran
-                </td>
-                <td className="py-5 px-6 text-center">
-                  <span className="inline-block bg-secondary-container text-secondary px-3 py-1 font-space text-label-sm font-bold tracking-widest uppercase">Sedang</span>
-                </td>
-                <td className="py-5 px-6 text-center text-secondary font-bold text-body-lg">52</td>
-                <td className="py-5 px-6 text-on-surface-variant">Periode 3 hari untuk pemulihan pelanggaran material; pemutusan kerja sepihak sewenang-wenang.</td>
-              </tr>
-              <tr className="hover:bg-surface-variant/50 transition-colors">
-                <td className="py-5 px-6 font-bold flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-tertiary"></div>
-                  Kepatuhan
-                </td>
-                <td className="py-5 px-6 text-center">
-                  <span className="inline-block bg-tertiary-container text-tertiary px-3 py-1 font-space text-label-sm font-bold tracking-widest uppercase">Rendah</span>
-                </td>
-                <td className="py-5 px-6 text-center text-tertiary font-bold text-body-lg">12</td>
-                <td className="py-5 px-6 text-on-surface-variant">Klausul GDPR dan perlindungan data standar memenuhi persyaratan saat ini.</td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[600px]">
+              <thead>
+                <tr className="bg-muted text-foreground font-space text-[10px] uppercase tracking-widest border-b border-border">
+                  <th className="py-4 px-6 font-bold w-1/3">Kategori Klausul</th>
+                  <th className="py-4 px-6 font-bold text-center">Jumlah Temuan</th>
+                  <th className="py-4 px-6 font-bold text-center">Rata-rata Skor</th>
+                  <th className="py-4 px-6 font-bold">Status</th>
+                </tr>
+              </thead>
+              <tbody className="font-inter text-sm text-foreground">
+                {Object.keys(categoryStats).map((cat, idx) => {
+                  const stat = categoryStats[cat]
+                  const avgScore = (stat.sumScore / stat.count).toFixed(1)
+                  const hasHighRisk = stat.highRiskCount > 0
+                  
+                  return (
+                    <tr key={cat} className={`border-b border-border hover:bg-muted/30 transition-colors ${idx === Object.keys(categoryStats).length - 1 ? 'border-b-0' : ''}`}>
+                      <td className="py-5 px-6 font-bold flex items-center gap-3 capitalize">
+                        <div className={`w-2 h-2 rounded-full ${hasHighRisk ? 'bg-destructive' : 'bg-primary'}`}></div>
+                        {cat.replace(/_/g, ' ')}
+                      </td>
+                      <td className="py-5 px-6 text-center font-medium">
+                        {stat.count}
+                      </td>
+                      <td className="py-5 px-6 text-center">
+                        <span className={`font-bold ${hasHighRisk ? 'text-destructive' : 'text-foreground'}`}>
+                          {avgScore}
+                        </span>
+                        <span className="text-xs text-muted-foreground">/5</span>
+                      </td>
+                      <td className="py-5 px-6">
+                        {hasHighRisk ? (
+                          <span className="inline-block bg-destructive/10 text-destructive px-3 py-1 font-space text-[10px] font-bold tracking-widest uppercase rounded">
+                            Perlu Perhatian
+                          </span>
+                        ) : (
+                          <span className="inline-block bg-emerald-500/10 text-emerald-600 px-3 py-1 font-space text-[10px] font-bold tracking-widest uppercase rounded">
+                            Aman
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+                {Object.keys(categoryStats).length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-muted-foreground">
+                      Tidak ada data kategori yang ditemukan.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

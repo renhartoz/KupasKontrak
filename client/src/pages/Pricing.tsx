@@ -9,7 +9,7 @@ export function Pricing() {
   return (
     <div className="max-w-7xl mx-auto space-y-12 py-12 animate-fade-in">
       <div className="text-center max-w-3xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-playfair text-primary font-bold mb-4 tracking-tight">Kelola Paket Anda</h1>
+        <h1 className="text-4xl md:text-5xl font-instrument text-primary mb-4 tracking-tight">Kelola Paket Anda</h1>
         <p className="text-sm font-inter text-muted-foreground leading-relaxed">
           Pilih paket yang paling sesuai dengan kebutuhan perusahaan Anda. Transparan, tanpa biaya tersembunyi.
         </p>
@@ -18,10 +18,10 @@ export function Pricing() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* B2C Esensial Plan */}
         <Card className="p-8 border border-border shadow-sm rounded-xl bg-card flex flex-col">
-          <h2 className="text-2xl font-playfair font-bold text-foreground mb-2">B2C Esensial</h2>
+          <h2 className="text-3xl font-instrument text-foreground mb-2">B2C Esensial</h2>
           <p className="text-sm font-inter text-muted-foreground mb-6">Cocok untuk individu dan bisnis kecil yang baru memulai.</p>
           <div className="mb-8">
-            <span className="text-4xl font-playfair font-bold">Gratis</span>
+            <span className="text-5xl font-instrument">Gratis</span>
           </div>
           <ul className="space-y-4 mb-8 flex-1">
             <li className="flex items-start gap-3 text-sm font-inter text-foreground">
@@ -51,10 +51,10 @@ export function Pricing() {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground text-[10px] font-space font-bold uppercase tracking-widest py-1 px-4 rounded-full">
             Paling Populer
           </div>
-          <h2 className="text-2xl font-playfair font-bold text-primary mb-2">B2B Profesional</h2>
+          <h2 className="text-3xl font-instrument text-primary mb-2">B2B Profesional</h2>
           <p className="text-sm font-inter text-muted-foreground mb-6">Paket komprehensif untuk tim legal dan perusahaan berkembang.</p>
           <div className="mb-8">
-            <span className="text-4xl font-playfair font-bold">Rp 499k</span>
+            <span className="text-5xl font-instrument">Rp 499k</span>
             <span className="text-sm font-inter text-muted-foreground">/bulan</span>
           </div>
           <ul className="space-y-4 mb-8 flex-1">
@@ -85,10 +85,10 @@ export function Pricing() {
 
         {/* Enterprise Plan */}
         <Card className="p-8 border border-border shadow-sm rounded-xl bg-card flex flex-col">
-          <h2 className="text-2xl font-playfair font-bold text-foreground mb-2">Enterprise</h2>
+          <h2 className="text-3xl font-instrument text-foreground mb-2">Enterprise</h2>
           <p className="text-sm font-inter text-muted-foreground mb-6">Solusi kustom untuk korporasi dengan kebutuhan legal berskala besar.</p>
           <div className="mb-8">
-            <span className="text-4xl font-playfair font-bold">Kustom</span>
+            <span className="text-5xl font-instrument">Kustom</span>
           </div>
           <ul className="space-y-4 mb-8 flex-1">
             <li className="flex items-start gap-3 text-sm font-inter text-foreground">
