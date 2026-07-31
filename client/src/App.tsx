@@ -4,11 +4,13 @@ import { AuthProvider } from './context/AuthContext'
 import { PrivateRoute } from './components/auth/PrivateRoute'
 import { MainLayout } from './components/layout/MainLayout'
 import { Login } from './pages/Login'
+import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
 import { ContractEditor } from './pages/ContractEditor'
 import { RiskScanner } from './pages/RiskScanner'
 import { RiskResults } from './pages/RiskResults'
 import { Pricing } from './pages/Pricing'
+import { Settings } from './pages/Settings'
 
 const queryClient = new QueryClient()
 
@@ -19,6 +21,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             
             <Route element={<PrivateRoute />}>
               <Route element={<MainLayout />}>
@@ -27,7 +30,7 @@ function App() {
                 <Route path="/results/:id" element={<RiskResults />} />
                 <Route path="/scanner" element={<RiskScanner />} />
                 <Route path="/pricing" element={<Pricing />} />
-                <Route path="/settings" element={<div className="p-8"><h1 className="text-headline-lg font-playfair">Settings</h1></div>} />
+                <Route path="/settings" element={<Settings />} />
               </Route>
             </Route>
 

@@ -1,7 +1,6 @@
-import { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { UploadCloud, File, X, ArrowRight, FileText } from 'lucide-react'
+import { UploadCloud, ArrowRight, FileText } from 'lucide-react'
 
 export function UploadDropzone() {
   return (

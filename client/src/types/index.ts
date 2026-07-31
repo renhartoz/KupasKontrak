@@ -42,4 +42,5 @@ export interface User {
   username: string
   email: string
   tier: 'b2c_esensial' | 'b2b_profesional'
+  created_at?: string
 }

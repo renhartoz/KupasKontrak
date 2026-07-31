@@ -1,10 +1,7 @@
-import { useState } from 'react'
 import { UploadDropzone } from '@/components/upload/UploadDropzone'
-import { Card } from '@/components/ui/card'
-import { Play } from 'lucide-react'
 
 export function RiskScanner() {
-  const [files, setFiles] = useState<File[]>([])
+  // const [files, setFiles] = useState<File[]>([])
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in py-8">

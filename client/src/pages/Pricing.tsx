@@ -1,8 +1,11 @@
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 export function Pricing() {
+  const { user } = useAuth()
+
   return (
     <div className="max-w-7xl mx-auto space-y-12 py-12 animate-fade-in">
       <div className="text-center max-w-3xl mx-auto">
@@ -13,9 +16,9 @@ export function Pricing() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Starter Plan */}
+        {/* B2C Esensial Plan */}
         <Card className="p-8 border border-border shadow-sm rounded-xl bg-card flex flex-col">
-          <h2 className="text-2xl font-playfair font-bold text-foreground mb-2">Starter</h2>
+          <h2 className="text-2xl font-playfair font-bold text-foreground mb-2">B2C Esensial</h2>
           <p className="text-sm font-inter text-muted-foreground mb-6">Cocok untuk individu dan bisnis kecil yang baru memulai.</p>
           <div className="mb-8">
             <span className="text-4xl font-playfair font-bold">Gratis</span>
@@ -34,15 +37,21 @@ export function Pricing() {
               <span>Dukungan Email Dasar</span>
             </li>
           </ul>
-          <Button variant="outline" className="w-full font-space text-xs uppercase tracking-widest h-11">Paket Saat Ini</Button>
+          <Button 
+            variant={user?.tier === 'b2c_esensial' ? 'secondary' : 'outline'} 
+            disabled={user?.tier === 'b2c_esensial'}
+            className="w-full font-space text-xs uppercase tracking-widest h-11"
+          >
+            {user?.tier === 'b2c_esensial' ? 'Paket Saat Ini' : 'Berlangganan Esensial'}
+          </Button>
         </Card>
 
-        {/* Pro Plan */}
+        {/* B2B Profesional Plan */}
         <Card className="p-8 border-2 border-primary shadow-md rounded-xl bg-primary/5 flex flex-col relative transform lg:-translate-y-4">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground text-[10px] font-space font-bold uppercase tracking-widest py-1 px-4 rounded-full">
             Paling Populer
           </div>
-          <h2 className="text-2xl font-playfair font-bold text-primary mb-2">Pro B2B</h2>
+          <h2 className="text-2xl font-playfair font-bold text-primary mb-2">B2B Profesional</h2>
           <p className="text-sm font-inter text-muted-foreground mb-6">Paket komprehensif untuk tim legal dan perusahaan berkembang.</p>
           <div className="mb-8">
             <span className="text-4xl font-playfair font-bold">Rp 499k</span>
@@ -66,7 +75,12 @@ export function Pricing() {
               <span>Integrasi Editor Dokumen Premium</span>
             </li>
           </ul>
-          <Button className="w-full font-space text-xs uppercase tracking-widest h-11 bg-primary text-primary-foreground hover:bg-primary/90">Beralih ke Pro</Button>
+          <Button 
+            disabled={user?.tier === 'b2b_profesional'}
+            className={`w-full font-space text-xs uppercase tracking-widest h-11 ${user?.tier === 'b2b_profesional' ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}
+          >
+            {user?.tier === 'b2b_profesional' ? 'Paket Saat Ini' : 'Beralih ke Pro'}
+          </Button>
         </Card>
 
         {/* Enterprise Plan */}
