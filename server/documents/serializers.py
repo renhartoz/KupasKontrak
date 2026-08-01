@@ -45,6 +45,7 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
             "source_type",
             "page_count",
             "file_size_bytes",
+            "extracted_text",
             "overall_risk_score",
             "score_breakdown",
             "failure_reason",

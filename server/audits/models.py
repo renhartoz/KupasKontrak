@@ -48,21 +48,17 @@ class ClauseFinding(models.Model):
     )
     clause_text = models.TextField()
     is_fatal = models.BooleanField(default=False)
-    s1_score = models.PositiveSmallIntegerField(
-        choices=[(i, i) for i in range(1, 6)], null=True, blank=True
-    )
-    s2_score = models.PositiveSmallIntegerField(
-        choices=[(i, i) for i in range(1, 6)], null=True, blank=True
-    )
-    s3_score = models.PositiveSmallIntegerField(
-        choices=[(i, i) for i in range(1, 6)], null=True, blank=True
-    )
+    s1_score = models.FloatField(null=True, blank=True)
+    s2_score = models.FloatField(null=True, blank=True)
+    s3_score = models.FloatField(null=True, blank=True)
     clause_safety_score = models.FloatField(default=3.0)
     category = models.CharField(max_length=64, default="default")
     risk_level = models.CharField(max_length=16, choices=RiskLevel.choices)
-    plain_language_summary = models.TextField()
-    legal_reference = models.JSONField(null=True)
-    order_index = models.PositiveIntegerField()
+    plain_language_summary = models.TextField(null=True, blank=True)
+    mcp_query_hint = models.TextField(null=True, blank=True)
+    legal_reference = models.TextField(null=True, blank=True)
+    risky_keywords = models.JSONField(null=True, blank=True)
+    order_index = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["order_index"]

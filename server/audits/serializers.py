@@ -16,6 +16,7 @@ class ClauseFindingSerializer(serializers.ModelSerializer):
             "risk_level",
             "plain_language_summary",
             "legal_reference",
+            "risky_keywords",
             "order_index",
         ]
 

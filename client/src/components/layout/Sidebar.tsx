@@ -28,10 +28,12 @@ export function Sidebar() {
       </div>
 
       <div className="px-4 mb-6">
-        <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium h-10 gap-2">
-          <Upload className="w-4 h-4" />
-          Upload Contract
-        </Button>
+        <Link to="/scanner">
+          <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium h-10 gap-2">
+            <Upload className="w-4 h-4" />
+            Upload Contract
+          </Button>
+        </Link>
       </div>
 
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto">

@@ -26,7 +26,8 @@ export function Dashboard() {
       const res = await api.get('/documents/')
       // The backend uses StandardPageNumberPagination. If it's paginated, it returns { results: [] }
       return res.data.results ? res.data.results : res.data
-    }
+    },
+    refetchInterval: 3000
   })
 
   // Calculations
@@ -40,7 +41,7 @@ export function Dashboard() {
     : 0
 
   const recentDocuments = documents.slice(0, 2)
-  const queuedDocuments = documents.filter(d => d.status === 'uploaded' || d.status === 'processing').slice(0, 2)
+  const queuedDocuments = documents.filter(d => d.status !== 'done' && d.status !== 'failed').slice(0, 2)
 
   const isB2B = user?.tier === 'b2b_profesional'
 

@@ -22,7 +22,7 @@ def _build_category_breakdown(clauses) -> list[dict]:
     breakdown = []
     for cat, scores in groups.items():
         avg_score = sum(scores) / len(scores)
-        normalized_score = round((avg_score / 5.0) * 100.0, 1)
+        normalized_score = round(avg_score, 1)
         breakdown.append(
             {
                 "category": cat,
@@ -45,12 +45,12 @@ def compute_document_score(document) -> tuple[float, list[dict], int]:
         weight = CATEGORY_WEIGHTS.get(clause.category, CATEGORY_WEIGHTS["default"])
         weighted_sum += clause.clause_safety_score * weight
         weight_sum += weight
-        if getattr(clause, "is_fatal", False) or clause.clause_safety_score <= 1.0:
+        if getattr(clause, "is_fatal", False) or clause.clause_safety_score >= 80.0:
             fatal_count += 1
 
-    base_score = (weighted_sum / (5 * weight_sum)) * 100 if weight_sum else 0.0
+    base_score = (weighted_sum / weight_sum) if weight_sum else 0.0
     penalty = fatal_count * FATAL_CLAUSE_PENALTY_POINTS
-    overall_score = max(0.0, base_score - penalty)
+    overall_score = min(100.0, base_score + penalty)
 
     breakdown = _build_category_breakdown(clauses)
     return round(overall_score, 1), breakdown, fatal_count

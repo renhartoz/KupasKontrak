@@ -20,15 +20,17 @@ export function ContractEditor() {
     },
     refetchInterval: (query) => {
       const status = query.state?.data?.status
-      return (status === 'uploaded' || status === 'processing') ? 3000 : false
+      return (status && status !== 'done' && status !== 'failed') ? 3000 : false
     },
     retry: 1
   })
 
-  // Automatically switch to chat tab on mobile when a clause is selected
+  // Automatically switch tabs based on clause selection
   useEffect(() => {
     if (selectedClauseId) {
       setActiveTab('chat')
+    } else {
+      setActiveTab('editor')
     }
   }, [selectedClauseId])
 
@@ -90,7 +92,7 @@ export function ContractEditor() {
     <div className="h-[calc(100vh-160px)] min-h-[500px] flex flex-col w-full border border-border rounded-xl overflow-hidden shadow-sm bg-card animate-fade-in">
       
       {/* Mobile Tab Segmented Control */}
-      <div className="lg:hidden flex border-b border-border bg-muted/30 p-2 shrink-0">
+      <div className="xl:hidden flex border-b border-border bg-muted/30 p-2 shrink-0">
         <div className="flex w-full bg-muted rounded-lg p-1">
           <button 
             onClick={() => setActiveTab('editor')}
@@ -111,7 +113,7 @@ export function ContractEditor() {
 
       <div className="flex-1 flex flex-row w-full overflow-hidden relative">
         {/* Left Pane: Chatbot (Hidden on mobile if tab is not chat) */}
-        <div className={`w-full lg:w-[400px] shrink-0 lg:border-r border-border bg-background flex-col ${activeTab === 'chat' ? 'flex' : 'hidden lg:flex'}`}>
+        <div className={`w-full xl:w-[400px] shrink-0 xl:border-r border-border bg-background flex-col ${activeTab === 'chat' ? 'flex' : 'hidden xl:flex'}`}>
           <ChatbotPanel 
             documentId={id} 
             selectedClauseId={selectedClauseId} 
@@ -119,7 +121,7 @@ export function ContractEditor() {
         </div>
 
         {/* Right Pane: Document Editor (Hidden on mobile if tab is not editor) */}
-        <div className={`flex-1 min-w-0 bg-background flex-col relative ${activeTab === 'editor' ? 'flex' : 'hidden lg:flex'}`}>
+        <div className={`flex-1 min-w-0 bg-background flex-col relative ${activeTab === 'editor' ? 'flex' : 'hidden xl:flex'}`}>
           <DocumentEditor 
             document={document} 
             selectedClauseId={selectedClauseId}

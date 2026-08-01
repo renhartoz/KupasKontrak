@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/api'
+import ReactMarkdown from 'react-markdown'
 
 interface ChatbotPanelProps {
   documentId?: string
@@ -133,7 +134,9 @@ export function ChatbotPanel({ selectedClauseId }: ChatbotPanelProps) {
                     
                     {/* AI Answer */}
                     <div className="self-start bg-muted text-foreground px-4 py-3 rounded-2xl rounded-tl-sm max-w-[90%] border border-border shadow-sm">
-                      <p className="text-sm font-inter leading-relaxed whitespace-pre-wrap">{inq.answer}</p>
+                      <div className="text-sm font-inter leading-relaxed prose prose-sm dark:prose-invert [&>p]:mb-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4 [&>h1]:font-bold [&>h2]:font-bold [&>h3]:font-bold">
+                        <ReactMarkdown>{inq.answer}</ReactMarkdown>
+                      </div>
                     </div>
                   </div>
                 ))}

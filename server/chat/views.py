@@ -26,7 +26,24 @@ class ClauseAskView(APIView):
         serializer.is_valid(raise_exception=True)
         question = serializer.validated_data["question"]
 
-        answer = ask_clause_question(clause.clause_text, clause.legal_reference, question)
+        # Fetch up to 3 previous inquiries for context (latest first, then reverse for chronological order)
+        previous_inquiries = list(ClauseInquiry.objects.filter(
+            clause=clause, user=request.user
+        ).order_by("-created_at")[:3])
+        previous_inquiries.reverse()
+        
+        history = []
+        for inq in previous_inquiries:
+            history.append({"role": "user", "content": inq.question})
+            history.append({"role": "assistant", "content": inq.answer})
+
+        answer = ask_clause_question(
+            clause.clause_text, 
+            clause.legal_reference, 
+            question, 
+            full_document_text=clause.document.extracted_text or "",
+            history=history
+        )
         inquiry = ClauseInquiry.objects.create(
             clause=clause,
             user=request.user,

@@ -51,6 +51,9 @@ def process_document(self, document_id: str):
         extracted_text = extract(document)
         if not extracted_text:
             raise OcrExtractionError("Gagal mengekstrak teks: hasil ekstraksi kosong.")
+            
+        document.extracted_text = extracted_text
+        document.save(update_fields=["extracted_text", "updated_at"])
 
         _emit_audit_event(
             document,
@@ -85,6 +88,9 @@ def process_document(self, document_id: str):
                 order_index=idx,
             )
             finding.mcp_query_hint = item.mcp_query_hint
+            finding.legal_reference = item.legal_reference
+            finding.risky_keywords = item.risky_keywords
+            finding.save()
             saved_clauses.append(finding)
             if item.is_flagged:
                 _emit_audit_event(

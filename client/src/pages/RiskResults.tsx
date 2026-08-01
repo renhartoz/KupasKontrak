@@ -43,8 +43,8 @@ export function RiskResults() {
   const isMediumRisk = score >= 40 && score < 70
   const isLowRisk = score < 40
 
-  const highRiskClauses = clauses.filter((c: any) => c.clause_safety_score <= 2)
-  const mediumRiskClauses = clauses.filter((c: any) => c.clause_safety_score === 3)
+  const highRiskClauses = clauses.filter((c: any) => c.clause_safety_score >= 70)
+  const mediumRiskClauses = clauses.filter((c: any) => c.clause_safety_score >= 40 && c.clause_safety_score < 70)
   
   const activeClause = selectedHighlight ? clauses.find((c: any) => c.id === selectedHighlight) : (highRiskClauses[0] || mediumRiskClauses[0] || clauses[0])
 
@@ -56,7 +56,7 @@ export function RiskResults() {
     }
     acc[cat].count++
     acc[cat].sumScore += clause.clause_safety_score
-    if (clause.clause_safety_score <= 2) {
+    if (clause.clause_safety_score >= 70) {
       acc[cat].highRiskCount++
     }
     return acc
@@ -102,20 +102,12 @@ export function RiskResults() {
           
           <div className="relative w-48 h-48 mb-8 flex items-center justify-center">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="40" fill="transparent" stroke="currentColor" className="text-muted" strokeWidth="8" />
-              <circle 
-                cx="50" cy="50" r="40" fill="transparent" 
-                stroke="currentColor" 
-                className={`${strokeColor} transition-all duration-1000 ease-out`}
-                strokeWidth="8" 
-                strokeDasharray={circumference} 
-                strokeDashoffset={strokeDashoffset} 
-                strokeLinecap="round" 
-              />
+              <circle cx="50" cy="50" r={radius} className="text-muted/30 stroke-current" strokeWidth="8" fill="transparent" />
+              <circle cx="50" cy="50" r={radius} className={`${strokeColor} stroke-current transition-all duration-1000 ease-in-out`} strokeWidth="8" fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-5xl font-instrument text-foreground">{score}</span>
-              <span className="text-xs font-inter text-muted-foreground border-t border-border pt-1 mt-1">/ 100</span>
+              <span className="text-5xl font-instrument text-foreground tracking-tight">{Math.round(score)}</span>
+              <span className="text-xs font-space text-muted-foreground tracking-widest mt-1">/ 100</span>
             </div>
           </div>
 
@@ -166,7 +158,7 @@ export function RiskResults() {
               )}
               {[...highRiskClauses, ...mediumRiskClauses].slice(0, 5).map((clause: any) => {
                 const isActive = activeClause?.id === clause.id
-                const isHigh = clause.clause_safety_score <= 2
+                const isHigh = clause.clause_safety_score >= 70
                 
                 return (
                   <div 
@@ -180,7 +172,7 @@ export function RiskResults() {
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className={`text-[10px] font-space uppercase tracking-widest font-bold ${isHigh ? 'text-destructive' : 'text-amber-500'}`}>
-                        Skor: {clause.clause_safety_score}/5
+                        Skor: {Math.round(clause.clause_safety_score)}/100
                       </span>
                       <span className="text-[10px] font-space uppercase tracking-widest font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
                         {clause.category.replace('_', ' ')}
@@ -198,10 +190,10 @@ export function RiskResults() {
             <div className="md:col-span-7 h-full">
               {activeClause ? (
                 <Card className="bg-card shadow-sm p-6 sm:p-8 border-border rounded-xl h-full flex flex-col overflow-y-auto">
-                  <div className={`flex items-center gap-2 mb-6 ${activeClause.clause_safety_score <= 2 ? 'text-destructive' : 'text-amber-500'}`}>
+                  <div className={`flex items-center gap-2 mb-6 ${activeClause.clause_safety_score >= 70 ? 'text-destructive' : 'text-amber-500'}`}>
                     <AlertTriangle className="w-4 h-4" />
                     <span className="text-[10px] font-space uppercase tracking-widest font-bold">
-                      {activeClause.is_fatal ? 'Ilegal (Melanggar Hukum)' : (activeClause.clause_safety_score <= 2 ? 'Risiko Tinggi' : 'Risiko Sedang')}
+                      {activeClause.is_fatal ? 'Ilegal (Melanggar Hukum)' : (activeClause.clause_safety_score >= 70 ? 'Risiko Tinggi' : 'Risiko Sedang')}
                     </span>
                   </div>
                   
@@ -210,6 +202,17 @@ export function RiskResults() {
                       "{activeClause.clause_text}"
                     </p>
                   </div>
+                  
+                  {activeClause.legal_reference && (
+                    <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-md">
+                      <h4 className="text-[10px] font-space uppercase tracking-widest font-bold text-amber-600 mb-2 flex items-center gap-2">
+                        Dasar Hukum / Referensi
+                      </h4>
+                      <p className="text-sm font-inter text-amber-700 leading-relaxed">
+                        {activeClause.legal_reference}
+                      </p>
+                    </div>
+                  )}
                   
                   <div className="bg-primary/5 p-6 rounded-lg mb-6 border border-primary/10">
                     <div className="flex items-center gap-3 mb-3">
@@ -267,7 +270,7 @@ export function RiskResults() {
               <tbody className="font-inter text-sm text-foreground">
                 {Object.keys(categoryStats).map((cat, idx) => {
                   const stat = categoryStats[cat]
-                  const avgScore = (stat.sumScore / stat.count).toFixed(1)
+                  const avgScore = (stat.sumScore / stat.count).toFixed(0)
                   const hasHighRisk = stat.highRiskCount > 0
                   
                   return (
@@ -283,7 +286,7 @@ export function RiskResults() {
                         <span className={`font-bold ${hasHighRisk ? 'text-destructive' : 'text-foreground'}`}>
                           {avgScore}
                         </span>
-                        <span className="text-xs text-muted-foreground">/5</span>
+                        <span className="text-xs text-muted-foreground">/100</span>
                       </td>
                       <td className="py-5 px-6">
                         {hasHighRisk ? (

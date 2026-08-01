@@ -25,6 +25,7 @@ class Document(models.Model):
     source_type = models.CharField(max_length=16, choices=SourceType.choices, null=True)
     page_count = models.PositiveIntegerField(null=True)
     file_size_bytes = models.PositiveIntegerField()
+    extracted_text = models.TextField(null=True, blank=True)
     status = models.CharField(
         max_length=24, choices=Status.choices, default=Status.UPLOADED
     )
