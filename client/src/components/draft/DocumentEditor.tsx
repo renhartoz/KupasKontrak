@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/api'
 import ReactMarkdown from 'react-markdown'
+import { SecurePdfViewer } from '../audit-result/SecurePdfViewer'
 
 interface DocumentEditorProps {
   document: any
@@ -13,7 +14,7 @@ interface DocumentEditorProps {
 }
 
 export function DocumentEditor({ document, selectedClauseId, onSelectClause }: DocumentEditorProps) {
-  const [viewMode, setViewMode] = useState<'ringkas' | 'dokumen_penuh'>('ringkas')
+  const [viewMode, setViewMode] = useState<'ringkas' | 'dokumen_penuh' | 'dokumen_asli'>('ringkas')
   const isProcessing = document && document.status !== 'done' && document.status !== 'failed'
 
   const { data: clauses = [], isLoading } = useQuery({
@@ -66,36 +67,22 @@ export function DocumentEditor({ document, selectedClauseId, onSelectClause }: D
               </div>
             ) : viewMode === 'dokumen_penuh' ? (
               <div className="bg-background p-8 sm:p-12 border border-border shadow-sm rounded-md space-y-6">
-                {document.extracted_text ? (
-                  document.extracted_text.split('\n').map((paragraph: string, idx: number) => {
-                    if (!paragraph.trim()) return null;
-                    return (
-                      <p key={idx} className="text-sm font-inter text-foreground leading-relaxed text-justify">
-                        {paragraph}
-                      </p>
-                    )
-                  })
-                ) : (
-                  <div className="text-center text-muted-foreground py-12">
-                    Teks penuh dokumen belum tersedia. Silakan proses ulang dokumen.
-                  </div>
-                )}
-                
-                <div className="pt-12 mt-12 border-t border-border">
-                  <h3 className="font-instrument text-2xl text-primary mb-6">Klausul yang Disorot AI</h3>
-                  <div className="space-y-6">
-                    {clauses.map((clause: any) => (
-                      <div 
-                        key={clause.id}
-                        onClick={() => onSelectClause(selectedClauseId === clause.id ? null : clause.id)}
-                        className={`p-4 border rounded-md cursor-pointer transition-colors ${selectedClauseId === clause.id ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'}`}
-                      >
-                        <h4 className="font-bold font-inter text-sm mb-2">{clause.category}</h4>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{clause.clause_text}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <HighlightedDocument 
+                   text={document.extracted_text} 
+                   clauses={clauses} 
+                   selectedClauseId={selectedClauseId}
+                   onSelectClause={onSelectClause}
+                />
+              </div>
+            ) : viewMode === 'dokumen_asli' ? (
+              <div className="bg-background shadow-sm rounded-md h-[800px] w-full relative overflow-hidden">
+                 {document.signed_pdf_url ? (
+                   <SecurePdfViewer signedUrl={document.signed_pdf_url} title={document.original_filename} />
+                 ) : (
+                   <div className="flex h-full w-full items-center justify-center p-8 text-muted-foreground text-sm border border-border border-dashed">
+                     Tautan PDF asli tidak tersedia atau sudah kedaluwarsa.
+                   </div>
+                 )}
               </div>
             ) : (
               clauses.map((clause: any) => {
@@ -190,6 +177,12 @@ export function DocumentEditor({ document, selectedClauseId, onSelectClause }: D
           >
             Dokumen Penuh
           </button>
+          <button 
+            onClick={() => setViewMode('dokumen_asli')} 
+            className={`px-3 py-1.5 text-[10px] font-space tracking-widest uppercase font-bold rounded-sm transition-colors ${viewMode === 'dokumen_asli' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            PDF Asli
+          </button>
         </div>
         <div className="w-px h-6 bg-border mx-1"></div>
         <Button 
@@ -213,5 +206,114 @@ export function DocumentEditor({ document, selectedClauseId, onSelectClause }: D
       </div>
 
     </Card>
+  )
+}
+
+function HighlightedDocument({ text, clauses, selectedClauseId, onSelectClause }: { text: string, clauses: any[], selectedClauseId: string | null, onSelectClause: (id: string | null) => void }) {
+  if (!text) return <div className="text-center text-muted-foreground py-12">Teks penuh dokumen belum tersedia.</div>;
+
+  const matches: { start: number, end: number, clause: any }[] = [];
+  const textMapping: number[] = [];
+  const normalizedTextArr: string[] = [];
+  for (let i = 0; i < text.length; i++) {
+    if (/[a-zA-Z0-9]/.test(text[i])) {
+      normalizedTextArr.push(text[i].toLowerCase());
+      textMapping.push(i);
+    }
+  }
+  const normTextStr = normalizedTextArr.join('');
+
+  clauses.forEach(clause => {
+    if (!clause.clause_text) return;
+    const searchNormalized = clause.clause_text.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    if (searchNormalized.length === 0) return;
+
+    let matchIdx = normTextStr.indexOf(searchNormalized);
+    if (matchIdx !== -1) {
+      const startOrig = textMapping[matchIdx];
+      const endOrig = textMapping[matchIdx + searchNormalized.length - 1] + 1;
+      matches.push({ start: startOrig, end: endOrig, clause });
+    }
+  });
+
+  matches.sort((a, b) => a.start - b.start);
+
+  const chunks: { text: string, isClause: boolean, clause?: any }[] = [];
+  let currentIndex = 0;
+
+  matches.forEach(match => {
+    if (match.start > currentIndex) {
+      chunks.push({ text: text.substring(currentIndex, match.start), isClause: false });
+    }
+    if (match.start >= currentIndex) {
+      chunks.push({ text: text.substring(match.start, match.end), isClause: true, clause: match.clause });
+      currentIndex = match.end;
+    }
+  });
+
+  if (currentIndex < text.length) {
+    chunks.push({ text: text.substring(currentIndex), isClause: false });
+  }
+
+  const renderClauseText = (clauseText: string, riskyKeywords: string[]) => {
+    if (!riskyKeywords || riskyKeywords.length === 0) return clauseText;
+    
+    const sortedKeywords = [...riskyKeywords].sort((a, b) => b.length - a.length);
+    let textChunks = [{ text: clauseText, isKeyword: false }];
+    
+    sortedKeywords.forEach(keyword => {
+      if (!keyword) return;
+      const newChunks: {text: string, isKeyword: boolean}[] = [];
+      textChunks.forEach(chunk => {
+        if (chunk.isKeyword) {
+          newChunks.push(chunk);
+        } else {
+          const parts = chunk.text.split(keyword);
+          parts.forEach((part, index) => {
+            if (part) newChunks.push({ text: part, isKeyword: false });
+            if (index < parts.length - 1) {
+              newChunks.push({ text: keyword, isKeyword: true });
+            }
+          });
+        }
+      });
+      textChunks = newChunks;
+    });
+    
+    return textChunks.map((c, i) => 
+      c.isKeyword ? <strong key={i} className="font-bold bg-red-500/40 text-red-950 border-b-2 border-red-600 px-1 mx-0.5 rounded-sm shadow-sm">{c.text}</strong> : <span key={i}>{c.text}</span>
+    );
+  };
+
+  return (
+    <div className="text-sm font-inter text-foreground leading-relaxed text-justify whitespace-pre-wrap">
+      {chunks.map((chunk, i) => {
+        if (!chunk.isClause) {
+          return <span key={i}>{chunk.text}</span>
+        }
+        
+        const isHighRisk = chunk.clause.clause_safety_score >= 70;
+        const isSelected = selectedClauseId === chunk.clause.id;
+        
+        return (
+          <span 
+            key={i}
+            id={`clause-${chunk.clause.id}`}
+            onClick={() => onSelectClause(isSelected ? null : chunk.clause.id)}
+            className={`cursor-pointer inline transition-all duration-200 px-1 rounded-sm ${
+              isSelected 
+                ? (isHighRisk ? 'bg-destructive/20 border-b-2 border-destructive shadow-sm' : 'bg-amber-500/30 border-b-2 border-amber-500 shadow-sm')
+                : (isHighRisk ? 'bg-destructive/10 hover:bg-destructive/20 border-b border-destructive/30' : 'bg-amber-500/10 hover:bg-amber-500/20 border-b border-amber-500/30')
+            }`}
+            title={`Kategori: ${chunk.clause.category} | Skor: ${Math.round(chunk.clause.clause_safety_score)}/100`}
+          >
+            <strong className="inline-flex items-center bg-emerald-500/30 text-emerald-900 font-bold px-1.5 py-0.5 rounded-sm mx-1 uppercase text-[10px] tracking-wider align-baseline border-b-2 border-emerald-500/50 shadow-sm">
+              {chunk.clause.category.replace(/_/g, ' ')}
+            </strong>
+            {renderClauseText(chunk.text, chunk.clause.risky_keywords)}
+          </span>
+        )
+      })}
+    </div>
   )
 }

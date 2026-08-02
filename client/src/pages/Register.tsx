@@ -95,6 +95,7 @@ export function Register() {
               type="password"
               {...register('password')} 
               placeholder="Buat password"
+              autoComplete="new-password"
               className={errors.password ? 'border-destructive focus-visible:ring-destructive' : ''}
             />
             {errors.password && <p className="text-xs text-destructive font-medium">{errors.password.message}</p>}
@@ -106,6 +107,7 @@ export function Register() {
               type="password"
               {...register('confirmPassword')} 
               placeholder="Ulangi password"
+              autoComplete="new-password"
               className={errors.confirmPassword ? 'border-destructive focus-visible:ring-destructive' : ''}
             />
             {errors.confirmPassword && <p className="text-xs text-destructive font-medium">{errors.confirmPassword.message}</p>}

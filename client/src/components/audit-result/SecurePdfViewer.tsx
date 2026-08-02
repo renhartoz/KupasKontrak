@@ -43,7 +43,6 @@ export function SecurePdfViewer({ signedUrl, title }: SecurePdfViewerProps) {
           src={signedUrl}
           title={title}
           className="w-full h-full border-none"
-          sandbox="allow-same-origin allow-scripts"
         />
       </div>
       

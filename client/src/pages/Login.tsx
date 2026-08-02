@@ -63,6 +63,7 @@ export function Login() {
             <Input 
               {...register('username')} 
               placeholder="Masukkan username"
+              autoComplete="username"
               className={errors.username ? 'border-destructive focus-visible:ring-destructive' : ''}
             />
             {errors.username && <p className="text-xs text-destructive font-medium">{errors.username.message}</p>}
@@ -74,6 +75,7 @@ export function Login() {
               type="password"
               {...register('password')} 
               placeholder="Masukkan password"
+              autoComplete="current-password"
               className={errors.password ? 'border-destructive focus-visible:ring-destructive' : ''}
             />
             {errors.password && <p className="text-xs text-destructive font-medium">{errors.password.message}</p>}
