@@ -22,6 +22,8 @@ interface Inquiry {
 export function ChatbotPanel({ selectedClauseId }: ChatbotPanelProps) {
   const [question, setQuestion] = useState('')
   const [isAsking, setIsAsking] = useState(false)
+  const [streamingQuestion, setStreamingQuestion] = useState('')
+  const [streamingAnswer, setStreamingAnswer] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { data: history = [], refetch } = useQuery<Inquiry[]>({
@@ -29,13 +31,11 @@ export function ChatbotPanel({ selectedClauseId }: ChatbotPanelProps) {
     queryFn: async () => {
       if (!selectedClauseId) return []
       const res = await api.get(`/chat/clauses/${selectedClauseId}/inquiries/`)
-      // API returns descending order, so reverse to show oldest first
       return res.data.results ? res.data.results.reverse() : res.data.reverse()
     },
     enabled: !!selectedClauseId
   })
 
-  // Scroll to bottom when history changes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [history])
@@ -45,13 +45,42 @@ export function ChatbotPanel({ selectedClauseId }: ChatbotPanelProps) {
     
     setIsAsking(true)
     setQuestion('')
+    setStreamingQuestion(text)
+    setStreamingAnswer('')
+
     try {
-      await api.post(`/chat/clauses/${selectedClauseId}/ask/`, { question: text })
+      const token = localStorage.getItem('token')
+      const response = await fetch(`http://localhost:8000/api/v1/chat/clauses/${selectedClauseId}/ask/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ question: text })
+      })
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      
+      if (reader) {
+        let done = false
+        while (!done) {
+          const { value, done: readerDone } = await reader.read()
+          done = readerDone
+          if (value) {
+            const chunk = decoder.decode(value, { stream: true })
+            setStreamingAnswer(prev => prev + chunk)
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+          }
+        }
+      }
       refetch()
     } catch (e) {
       console.error('Failed to ask question', e)
     } finally {
       setIsAsking(false)
+      setStreamingQuestion('')
+      setStreamingAnswer('')
     }
   }
 
@@ -141,12 +170,23 @@ export function ChatbotPanel({ selectedClauseId }: ChatbotPanelProps) {
                   </div>
                 ))}
                 
-                {isAsking && (
-                  <div className="self-start bg-muted text-foreground px-4 py-3 rounded-2xl rounded-tl-sm max-w-[90%] border border-border shadow-sm">
-                    <div className="flex gap-1 items-center h-5">
-                      <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce"></span>
-                      <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                      <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                {streamingQuestion && (
+                  <div className="flex flex-col gap-4">
+                    <div className="self-end bg-primary/10 text-foreground px-4 py-3 rounded-2xl rounded-tr-sm max-w-[85%] border border-primary/20">
+                      <p className="text-sm font-inter leading-relaxed">{streamingQuestion}</p>
+                    </div>
+                    <div className="self-start bg-muted text-foreground px-4 py-3 rounded-2xl rounded-tl-sm max-w-[90%] border border-border shadow-sm">
+                      {!streamingAnswer ? (
+                        <div className="flex gap-1 items-center h-5">
+                          <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce"></span>
+                          <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                          <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                        </div>
+                      ) : (
+                        <div className="text-sm font-inter leading-relaxed prose prose-sm dark:prose-invert [&>p]:mb-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4 [&>h1]:font-bold [&>h2]:font-bold [&>h3]:font-bold">
+                          <ReactMarkdown>{streamingAnswer}</ReactMarkdown>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

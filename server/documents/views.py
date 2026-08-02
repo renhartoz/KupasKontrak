@@ -1,9 +1,13 @@
+import asyncio
+import json
+from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import AccessToken
 from core.pagination import StandardPageNumberPagination
 from core.permissions import IsDocumentOwner, IsTierB2B
 from documents.cloudinary_service import generate_signed_url, upload_document
@@ -113,3 +117,52 @@ class DocumentExportView(APIView):
                 "score_breakdown": doc.score_breakdown,
             }
         )
+
+async def document_events_view(request, pk=None):
+    token_str = request.GET.get("token")
+    if not token_str:
+        return StreamingHttpResponse("data: {\"error\": \"unauthorized\"}\n\n", status=401, content_type="text/event-stream")
+    
+    try:
+        token = AccessToken(token_str)
+        user_id = token["user_id"]
+    except Exception:
+        return StreamingHttpResponse("data: {\"error\": \"invalid token\"}\n\n", status=401, content_type="text/event-stream")
+
+    async def event_stream():
+        last_statuses = {}
+        while True:
+            try:
+                if pk:
+                    docs = [await Document.objects.aget(pk=pk, owner_id=user_id)]
+                else:
+                    docs = [d async for d in Document.objects.filter(owner_id=user_id).order_by("-updated_at")[:10]]
+                
+                events_emitted = False
+                for doc in docs:
+                    doc_id = str(doc.id)
+                    current_status = doc.status
+                    
+                    if last_statuses.get(doc_id) != current_status:
+                        payload = {
+                            "id": doc_id,
+                            "status": current_status,
+                            "is_processing": current_status not in [Document.Status.DONE, Document.Status.FAILED]
+                        }
+                        yield f"data: {json.dumps(payload)}\n\n"
+                        last_statuses[doc_id] = current_status
+                        events_emitted = True
+                        
+                if pk and last_statuses.get(str(pk)) in [Document.Status.DONE, Document.Status.FAILED]:
+                    break
+                    
+            except Document.DoesNotExist:
+                yield "data: {\"error\": \"not found\"}\n\n"
+                break
+                
+            if not events_emitted:
+                yield ": heartbeat\n\n"
+                
+            await asyncio.sleep(2)
+            
+    return StreamingHttpResponse(event_stream(), content_type="text/event-stream")

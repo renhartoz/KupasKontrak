@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { api } from '@/api'
 
 interface Document {
@@ -20,15 +21,38 @@ export function Dashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
+  const queryClient = useQueryClient()
+
   const { data: documents = [], isLoading } = useQuery<Document[]>({
     queryKey: ['documents'],
     queryFn: async () => {
       const res = await api.get('/documents/')
-      // The backend uses StandardPageNumberPagination. If it's paginated, it returns { results: [] }
       return res.data.results ? res.data.results : res.data
-    },
-    refetchInterval: 3000
+    }
   })
+
+  // Subscribe to SSE for global document updates
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    
+    const evtSource = new EventSource(`http://localhost:8000/api/v1/documents/events/?token=${token}`)
+    
+    evtSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.status) {
+          queryClient.invalidateQueries({ queryKey: ['documents'] })
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    
+    return () => {
+      evtSource.close()
+    }
+  }, [queryClient])
 
   // Calculations
   const totalDocuments = documents.length

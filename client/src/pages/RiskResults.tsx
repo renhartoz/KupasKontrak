@@ -49,15 +49,20 @@ export function RiskResults() {
   const activeClause = selectedHighlight ? clauses.find((c: any) => c.id === selectedHighlight) : (highRiskClauses[0] || mediumRiskClauses[0] || clauses[0])
 
   // Aggregate category stats
-  const categoryStats = clauses.reduce((acc: any, clause: any) => {
+  const categoryStats = clauses.reduce((acc: Record<string, any>, clause: any) => {
     const cat = clause.category || 'default'
     if (!acc[cat]) {
-      acc[cat] = { count: 0, highRiskCount: 0, sumScore: 0 }
+      acc[cat] = { count: 0, highRiskCount: 0, mediumRiskCount: 0, sumScore: 0, maxScore: 0 }
     }
     acc[cat].count++
     acc[cat].sumScore += clause.clause_safety_score
+    if (clause.clause_safety_score > acc[cat].maxScore) {
+      acc[cat].maxScore = clause.clause_safety_score
+    }
     if (clause.clause_safety_score >= 70) {
       acc[cat].highRiskCount++
+    } else if (clause.clause_safety_score >= 40) {
+      acc[cat].mediumRiskCount++
     }
     return acc
   }, {})
@@ -270,28 +275,33 @@ export function RiskResults() {
               <tbody className="font-inter text-sm text-foreground">
                 {Object.keys(categoryStats).map((cat, idx) => {
                   const stat = categoryStats[cat]
-                  const avgScore = (stat.sumScore / stat.count).toFixed(0)
+                  const displayScore = Math.round(stat.maxScore)
                   const hasHighRisk = stat.highRiskCount > 0
+                  const hasMediumRisk = stat.mediumRiskCount > 0
                   
                   return (
                     <tr key={cat} className={`border-b border-border hover:bg-muted/30 transition-colors ${idx === Object.keys(categoryStats).length - 1 ? 'border-b-0' : ''}`}>
                       <td className="py-5 px-6 font-bold flex items-center gap-3 capitalize">
-                        <div className={`w-2 h-2 rounded-full ${hasHighRisk ? 'bg-destructive' : 'bg-primary'}`}></div>
+                        <div className={`w-2 h-2 rounded-full ${hasHighRisk ? 'bg-destructive' : (hasMediumRisk ? 'bg-amber-500' : 'bg-primary')}`}></div>
                         {cat.replace(/_/g, ' ')}
                       </td>
                       <td className="py-5 px-6 text-center font-medium">
                         {stat.count}
                       </td>
                       <td className="py-5 px-6 text-center">
-                        <span className={`font-bold ${hasHighRisk ? 'text-destructive' : 'text-foreground'}`}>
-                          {avgScore}
+                        <span className={`font-bold ${hasHighRisk ? 'text-destructive' : (hasMediumRisk ? 'text-amber-500' : 'text-foreground')}`}>
+                          {displayScore}
                         </span>
                         <span className="text-xs text-muted-foreground">/100</span>
                       </td>
                       <td className="py-5 px-6">
                         {hasHighRisk ? (
                           <span className="inline-block bg-destructive/10 text-destructive px-3 py-1 font-space text-[10px] font-bold tracking-widest uppercase rounded">
-                            Perlu Perhatian
+                            Berbahaya
+                          </span>
+                        ) : hasMediumRisk ? (
+                          <span className="inline-block bg-amber-500/10 text-amber-500 px-3 py-1 font-space text-[10px] font-bold tracking-widest uppercase rounded">
+                            Risiko Sedang
                           </span>
                         ) : (
                           <span className="inline-block bg-emerald-500/10 text-emerald-600 px-3 py-1 font-space text-[10px] font-bold tracking-widest uppercase rounded">

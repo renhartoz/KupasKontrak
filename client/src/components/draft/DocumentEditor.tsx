@@ -21,8 +21,7 @@ export function DocumentEditor({ document, selectedClauseId, onSelectClause }: D
     queryFn: async () => {
       const res = await api.get(`/audits/documents/${document.id}/clauses/`)
       return res.data.results ? res.data.results : res.data
-    },
-    refetchInterval: isProcessing ? 2000 : false
+    }
   })
 
   return (

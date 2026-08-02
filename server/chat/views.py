@@ -8,7 +8,8 @@ from audits.models import ClauseFinding
 from chat.models import ClauseInquiry
 from chat.serializers import ClauseAskSerializer, ClauseInquirySerializer
 from core.pagination import StandardPageNumberPagination
-from documents.services.llm_gateway import ask_clause_question
+from documents.services.llm_gateway import ask_clause_question_stream
+from django.http import StreamingHttpResponse
 
 
 class ClauseAskView(APIView):
@@ -26,7 +27,6 @@ class ClauseAskView(APIView):
         serializer.is_valid(raise_exception=True)
         question = serializer.validated_data["question"]
 
-        # Fetch up to 3 previous inquiries for context (latest first, then reverse for chronological order)
         previous_inquiries = list(ClauseInquiry.objects.filter(
             clause=clause, user=request.user
         ).order_by("-created_at")[:3])
@@ -37,20 +37,28 @@ class ClauseAskView(APIView):
             history.append({"role": "user", "content": inq.question})
             history.append({"role": "assistant", "content": inq.answer})
 
-        answer = ask_clause_question(
-            clause.clause_text, 
-            clause.legal_reference, 
-            question, 
-            full_document_text=clause.document.extracted_text or "",
-            history=history
-        )
-        inquiry = ClauseInquiry.objects.create(
-            clause=clause,
-            user=request.user,
-            question=question,
-            answer=answer,
-        )
-        return Response(ClauseInquirySerializer(inquiry).data, status=status.HTTP_201_CREATED)
+        def stream_response():
+            full_answer = []
+            generator = ask_clause_question_stream(
+                clause.clause_text, 
+                clause.legal_reference, 
+                question, 
+                full_document_text=clause.document.extracted_text or "",
+                history=history
+            )
+            for chunk in generator:
+                full_answer.append(chunk)
+                yield chunk
+                
+            final_answer = "".join(full_answer)
+            ClauseInquiry.objects.create(
+                clause=clause,
+                user=request.user,
+                question=question,
+                answer=final_answer
+            )
+            
+        return StreamingHttpResponse(stream_response(), content_type="text/plain")
 
 
 class InquiryHistoryView(APIView):

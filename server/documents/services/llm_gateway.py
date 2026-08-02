@@ -32,6 +32,7 @@ Jika klausul sah secara formal (is_fatal = false), nilai klausul berdasarkan 3 k
 
 PERINGATAN: Anda mengaudit kontrak pekerja informal yang sangat rentan eksploitasi. Anda HARUS bersikap SANGAT KRITIS menggunakan Rubrik Baku berikut.
 JIKA Anda menemukan klausul berbahaya (misalnya: denda sepihak, sanksi berat, pemotongan upah sepihak) yang pantas mendapat skor 4 atau 5 pada S1, maka Anda WAJIB memberikan skor minimal 4 juga pada S2 dan S3! (Anggaplah denda sepihak itu tidak pernah wajar (S3) dan tidak bisa dibenarkan oleh transparansi (S2), sehingga skor rata-ratanya tidak akan jatuh).
+ASUMSI DOKUMEN TUNGGAL: Anggap saja belum ada surat perjanjian/dokumen lain sebelumnya bila tidak disebutkan secara tertulis. Jika sebuah surat atau klausul HANYA membahas kewajiban bagi PIHAK KEDUA (Pekerja) tanpa memberikan hak yang setimpal di dalamnya, NILAI SEBAGAI BERBAHAYA (Skor 4 atau 5). Jangan pernah berasumsi bahwa hak pekerja diatur di dokumen lain!
 - Skor 1 (Sangat Aman): Hak dan kewajiban sangat seimbang. Menguntungkan pihak pekerja. Transparansi penuh.
 - Skor 2 (Batas Wajar): Praktik standar industri. Sedikit miring ke perusahaan tetapi masih sesuai koridor hukum umum.
 - Skor 3 (Peringatan Dini): Ada ambiguitas yang berpotensi merugikan (contoh: denda tidak spesifik, jam kerja tidak jelas).
@@ -274,3 +275,62 @@ def ask_clause_question(clause_text: str, legal_ref: dict, question: str, full_d
         return data["choices"][0]["message"]["content"].strip()
     except Exception as exc:
         raise LLMGatewayError(f"Failed to answer clause question: {exc}")
+
+def ask_clause_question_stream(clause_text: str, legal_ref: dict, question: str, full_document_text: str = "", history: list = None):
+    provider = getattr(settings, "LLM_PROVIDER", "groq").lower()
+    system_msg = (
+        "Anda adalah asisten hukum AI KupasKontrak. Jawab pertanyaan pengguna berdasarkan konteks "
+        "klausul saat ini dan keseluruhan teks dokumen kontrak yang disediakan.\n\n"
+        f"Klausul Spesifik:\n{clause_text}\n\n"
+        f"Konteks Keseluruhan Dokumen:\n{full_document_text}\n\n"
+        f"Rujukan Hukum: {json.dumps(legal_ref if legal_ref else {}, ensure_ascii=False)}"
+    )
+
+    if provider == "groq":
+        api_key = getattr(settings, "GROQ_API_KEY", "")
+        endpoint = "https://api.groq.com/openai/v1/chat/completions"
+        model = "llama-3.3-70b-versatile"
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    else:
+        api_key = getattr(settings, "OPENROUTER_API_KEY", "")
+        endpoint = "https://openrouter.ai/api/v1/chat/completions"
+        models = getattr(settings, "OPENROUTER_MODEL_CHAIN", ["google/gemini-2.5-flash"])
+        model = models[0] if models else "google/gemini-2.5-flash"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "X-Title": "KupasKontrak",
+        }
+
+    messages = [{"role": "system", "content": system_msg}]
+    if history:
+        for msg in history:
+            messages.append({"role": msg["role"], "content": msg["content"]})
+    messages.append({"role": "user", "content": question})
+
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.3,
+        "stream": True
+    }
+    
+    try:
+        with requests.post(endpoint, headers=headers, json=payload, stream=True, timeout=30) as resp:
+            resp.raise_for_status()
+            for line in resp.iter_lines():
+                if line:
+                    decoded = line.decode('utf-8')
+                    if decoded.startswith("data: "):
+                        content = decoded[6:]
+                        if content == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(content)
+                            delta = chunk["choices"][0].get("delta", {})
+                            if "content" in delta:
+                                yield delta["content"]
+                        except json.JSONDecodeError:
+                            pass
+    except Exception as exc:
+        yield f"\n[Error: {exc}]"

@@ -3,9 +3,9 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api'
 
 export function Topbar() {
@@ -13,15 +13,38 @@ export function Topbar() {
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  const queryClient = useQueryClient()
+
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
       const res = await api.get('/documents/')
       const docs = res.data.results ? res.data.results : res.data
       return docs.slice(0, 3)
-    },
-    refetchInterval: 5000
+    }
   })
+
+  // Subscribe to SSE for global document updates
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    
+    const evtSource = new EventSource(`http://localhost:8000/api/v1/documents/events/?token=${token}`)
+    
+    evtSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.status) {
+          queryClient.invalidateQueries({ queryKey: ['notifications'] })
+        }
+      } catch (e) {
+      }
+    }
+    
+    return () => {
+      evtSource.close()
+    }
+  }, [queryClient])
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur h-16 shrink-0 flex items-center justify-between px-4 lg:px-8">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChatbotPanel } from '@/components/chatbot/ChatbotPanel'
 import { DocumentEditor } from '@/components/draft/DocumentEditor'
 import { api } from '@/api'
@@ -18,14 +18,35 @@ export function ContractEditor() {
       const res = await api.get(`/documents/${id}/`)
       return res.data
     },
-    refetchInterval: (query) => {
-      const status = query.state?.data?.status
-      return (status && status !== 'done' && status !== 'failed') ? 3000 : false
-    },
     retry: 1
   })
 
-  // Automatically switch tabs based on clause selection
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    const isProcessing = document && document.status !== 'done' && document.status !== 'failed'
+    if (!isProcessing || !id) return
+
+    const token = localStorage.getItem('token')
+    const evtSource = new EventSource(`http://localhost:8000/api/v1/documents/${id}/events/?token=${token}`)
+    
+    evtSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.status === 'done' || data.status === 'failed') {
+          queryClient.invalidateQueries({ queryKey: ['document', id] })
+          queryClient.invalidateQueries({ queryKey: ['clauses', id] })
+          evtSource.close()
+        }
+      } catch (e) {
+      }
+    }
+    
+    return () => {
+      evtSource.close()
+    }
+  }, [document?.status, id, queryClient])
+
   useEffect(() => {
     if (selectedClauseId) {
       setActiveTab('chat')
