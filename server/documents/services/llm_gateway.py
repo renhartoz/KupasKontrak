@@ -101,7 +101,6 @@ class AnalyzedClause:
         self.s2_score = parse_score(s2_score)
         self.s3_score = parse_score(s3_score)
         
-        # Calculate intermediate clause_safety_score based on Weighted Average (SAW)
         if self.is_fatal:
             self.clause_safety_score = 100.0
             raw_score = 5.0

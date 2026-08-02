@@ -59,7 +59,7 @@ export function UploadDropzone() {
           'Content-Type': 'multipart/form-data'
         }
       })
-      // Redirect to the editor page with the new document ID
+
       navigate(`/editor/${response.data.id}`)
     } catch (err: any) {
       setError(err.response?.data?.detail || err.response?.data?.file?.[0] || 'Gagal mengunggah dokumen.')

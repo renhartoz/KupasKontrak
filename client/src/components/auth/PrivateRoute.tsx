@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { Loader2 } from 'lucide-react'
+
 
 interface PrivateRouteProps {
   requiredTier?: 'b2c_esensial' | 'b2b_profesional'

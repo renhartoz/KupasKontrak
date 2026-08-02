@@ -31,12 +31,12 @@ export function Dashboard() {
     }
   })
 
-  // Subscribe to SSE for global document updates
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
     
-    const evtSource = new EventSource(`http://localhost:8000/api/v1/documents/events/?token=${token}`)
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+    const evtSource = new EventSource(`${baseUrl}/documents/events/?token=${token}`)
     
     evtSource.onmessage = (event) => {
       try {
@@ -45,7 +45,6 @@ export function Dashboard() {
           queryClient.invalidateQueries({ queryKey: ['documents'] })
         }
       } catch (e) {
-        // ignore
       }
     }
     
@@ -54,7 +53,6 @@ export function Dashboard() {
     }
   }, [queryClient])
 
-  // Calculations
   const totalDocuments = documents.length
   const highRisk = documents.filter(d => d.overall_risk_score >= 70).length
   const safeContracts = documents.filter(d => d.overall_risk_score > 0 && d.overall_risk_score <= 40).length

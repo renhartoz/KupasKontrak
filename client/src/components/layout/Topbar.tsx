@@ -24,12 +24,13 @@ export function Topbar() {
     }
   })
 
-  // Subscribe to SSE for global document updates
+
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
     
-    const evtSource = new EventSource(`http://localhost:8000/api/v1/documents/events/?token=${token}`)
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+    const evtSource = new EventSource(`${baseUrl}/documents/events/?token=${token}`)
     
     evtSource.onmessage = (event) => {
       try {

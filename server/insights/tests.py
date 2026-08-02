@@ -68,12 +68,6 @@ class InsightsTests(APITestCase):
     def test_scoring_formula_calculation(self):
         score, breakdown, fatal_count = compute_document_score(self.document)
         self.assertEqual(fatal_count, 1)
-        # Using SAW: c1 = 5.0 (weight 1.0), c2 = 1.0 (weight 1.0)
-        # weighted_sum = 5.0*1.0 + 1.0*1.0 = 6.0
-        # weight_sum = 2.0
-        # base_score = (6.0 / (5 * 2.0)) * 100 = 60.0
-        # penalty = 1 * 25 = 25
-        # overall_score = max(0, 60.0 - 25) = 35.0
         self.assertEqual(score, 35.0)
         breakdown_cats = [b["category"] for b in breakdown]
         self.assertIn("default", breakdown_cats)

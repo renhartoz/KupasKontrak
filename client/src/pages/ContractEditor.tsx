@@ -28,7 +28,8 @@ export function ContractEditor() {
     if (!isProcessing || !id) return
 
     const token = localStorage.getItem('token')
-    const evtSource = new EventSource(`http://localhost:8000/api/v1/documents/${id}/events/?token=${token}`)
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+    const evtSource = new EventSource(`${baseUrl}/documents/${id}/events/?token=${token}`)
     
     evtSource.onmessage = (event) => {
       try {

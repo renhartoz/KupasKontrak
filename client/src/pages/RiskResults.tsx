@@ -41,14 +41,12 @@ export function RiskResults() {
   const score = document.overall_risk_score || 0
   const isHighRisk = score >= 70
   const isMediumRisk = score >= 40 && score < 70
-  const isLowRisk = score < 40
 
   const highRiskClauses = clauses.filter((c: any) => c.clause_safety_score >= 70)
   const mediumRiskClauses = clauses.filter((c: any) => c.clause_safety_score >= 40 && c.clause_safety_score < 70)
   
   const activeClause = selectedHighlight ? clauses.find((c: any) => c.id === selectedHighlight) : (highRiskClauses[0] || mediumRiskClauses[0] || clauses[0])
 
-  // Aggregate category stats
   const categoryStats = clauses.reduce((acc: Record<string, any>, clause: any) => {
     const cat = clause.category || 'default'
     if (!acc[cat]) {
