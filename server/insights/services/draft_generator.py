@@ -11,7 +11,7 @@ def generate_draft(document, user, draft_type, custom_instructions=None) -> Gene
     flagged_summary = "\n".join(
         f"- ID: {c.id} | Skor: {c.clause_safety_score} | Teks: {c.clause_text} | Kategori: {c.category}"
         for c in clauses
-        if c.clause_safety_score <= 3
+        if c.clause_safety_score >= 60.0
     )
 
     instructions_part = f"\nInstruksi Tambahan Pengguna: {custom_instructions}" if custom_instructions else ""
@@ -20,14 +20,22 @@ def generate_draft(document, user, draft_type, custom_instructions=None) -> Gene
         "Tugas Anda adalah merancang draf perbaikan kontrak yang adil bagi pekerja informal dan pemberi kerja, "
         "memperbaiki klausul-klausul bermasalah agar sesuai dengan regulasi positif Indonesia.\n\n"
         "Anda WAJIB mengembalikan respons dalam format JSON murni.\n"
-        "Jika draft_type == 'full_rewrite', format JSON: "
-        '{"title": "Perjanjian Kerja Lepas", "sections": [{"section_title": "Pasal 1", "content": "..."}]}\n'
-        "Jika draft_type == 'clause_patch', format JSON: "
-        '{"patches": [{"clause_id": "c-xxxx", "original_text": "...", "proposed_patch_text": "...", "rationale": "..."}]}'
+        "Jika draft_type == 'full_rewrite':\n"
+        f"- Format JSON: {{\"title\": \"{document.original_filename}\", \"sections\": [{{\"section_title\": \"Pasal 1\", \"content\": \"...\"}}]}}\n"
+        f"- Gunakan '{document.original_filename}' (tanpa ekstensi) sebagai nilai 'title'.\n"
+        "- Anda HARUS menulis ulang KESELURUHAN isi kontrak dari awal sampai akhir, menjadikan sebuah dokumen kontrak utuh.\n"
+        "- PERTAHANKAN seluruh klausul/pasal yang aman tanpa mengubah maknanya.\n"
+        "- PERBAIKI/UBAH hanya klausul-klausul yang bermasalah (berisiko) agar menjadi adil.\n"
+        "Jika draft_type == 'clause_patch':\n"
+        "- Format JSON: {\"patches\": [{\"clause_id\": \"c-xxxx\", \"original_text\": \"...\", \"proposed_patch_text\": \"...\", \"rationale\": \"...\"}]}\n"
     )
+    full_doc_context = f"\nTeks Dokumen Asli Keseluruhan:\n{document.extracted_text}\n" if draft_type == "full_rewrite" else ""
+
     user_msg = (
         f"Tipe Draf: {draft_type}\n"
-        f"Daftar Klausul Bermasalah:\n{flagged_summary or 'Semua klausul aman.'}{instructions_part}"
+        f"Daftar Klausul Bermasalah:\n{flagged_summary or 'Semua klausul aman.'}\n"
+        f"{full_doc_context}"
+        f"{instructions_part}"
     )
 
     if provider == "groq":
@@ -71,7 +79,7 @@ def generate_draft(document, user, draft_type, custom_instructions=None) -> Gene
                         "rationale": "Menyeimbangkan posisi tawar kedua belah pihak.",
                     }
                     for c in clauses
-                    if c.clause_safety_score <= 3
+                    if c.clause_safety_score >= 60.0
                 ]
             }
         else:

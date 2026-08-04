@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChatbotPanel } from '@/components/chatbot/ChatbotPanel'
 import { DocumentEditor } from '@/components/draft/DocumentEditor'
+import { DraftConfigModal, DraftPreviewModal } from '@/components/draft/DraftModals'
 import { api } from '@/api'
 import { Loader2, AlertCircle, MessageSquare, FileText } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 export function ContractEditor() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [selectedClauseId, setSelectedClauseId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'chat' | 'editor'>('editor')
 
@@ -20,6 +23,32 @@ export function ContractEditor() {
     },
     retry: 1
   })
+
+  const [showDraftConfig, setShowDraftConfig] = useState(false)
+  const [showDraftPreview, setShowDraftPreview] = useState(false)
+  const [isPollingDraft, setIsPollingDraft] = useState(false)
+  
+  const { data: drafts } = useQuery({
+    queryKey: ['drafts', id],
+    queryFn: async () => {
+      const res = await api.get(`/insights/documents/${id}/drafts/list/`)
+      return res.data.results || res.data
+    },
+    refetchInterval: isPollingDraft ? 2000 : false,
+    enabled: !!id
+  })
+
+  const prevDraftsLength = useRef(0)
+
+  useEffect(() => {
+    if (drafts) {
+      if (isPollingDraft && drafts.length > prevDraftsLength.current) {
+        setIsPollingDraft(false)
+        setShowDraftPreview(true)
+      }
+      prevDraftsLength.current = drafts.length
+    }
+  }, [drafts, isPollingDraft])
 
   const queryClient = useQueryClient()
 
@@ -148,9 +177,24 @@ export function ContractEditor() {
             document={document} 
             selectedClauseId={selectedClauseId}
             onSelectClause={setSelectedClauseId}
+            onAutoFix={user?.tier === 'b2b_profesional' ? () => setShowDraftConfig(true) : undefined}
+            isPollingDraft={isPollingDraft}
           />
         </div>
       </div>
+
+      <DraftConfigModal 
+        isOpen={showDraftConfig} 
+        onClose={() => setShowDraftConfig(false)} 
+        documentId={id as string} 
+        onSuccess={() => setIsPollingDraft(true)} 
+      />
+
+      <DraftPreviewModal
+        isOpen={showDraftPreview}
+        onClose={() => setShowDraftPreview(false)}
+        draft={drafts && drafts.length > 0 ? drafts[0] : null}
+      />
 
     </div>
   )

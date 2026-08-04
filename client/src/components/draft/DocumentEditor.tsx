@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download, ShieldAlert, FileText } from 'lucide-react'
+import { Download, ShieldAlert, FileText, Loader2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useQuery } from '@tanstack/react-query'
@@ -11,9 +11,11 @@ interface DocumentEditorProps {
   document: any
   selectedClauseId: string | null
   onSelectClause: (id: string | null) => void
+  onAutoFix?: () => void
+  isPollingDraft?: boolean
 }
 
-export function DocumentEditor({ document, selectedClauseId, onSelectClause }: DocumentEditorProps) {
+export function DocumentEditor({ document, selectedClauseId, onSelectClause, onAutoFix, isPollingDraft }: DocumentEditorProps) {
   const [viewMode, setViewMode] = useState<'ringkas' | 'dokumen_penuh' | 'dokumen_asli'>('ringkas')
   const isProcessing = document && document.status !== 'done' && document.status !== 'failed'
 
@@ -185,6 +187,19 @@ export function DocumentEditor({ document, selectedClauseId, onSelectClause }: D
           </button>
         </div>
         <div className="w-px h-6 bg-border mx-1"></div>
+        
+        {onAutoFix && (
+          <Button 
+            variant="default"
+            size="sm"
+            onClick={onAutoFix}
+            disabled={isPollingDraft}
+            className="font-space text-[10px] tracking-widest uppercase flex gap-2 h-7"
+          >
+            {isPollingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : '✨ Auto-Fix'}
+          </Button>
+        )}
+        
         <Button 
           variant="ghost" 
           size="sm" 
