@@ -70,21 +70,42 @@ Anda WAJIB mengembalikan respons dalam format JSON murni dengan skema berikut:
 """
 
 
+def compute_fry_detection_score(text: str) -> int:
+    if not text:
+        return 1
+    words = max(1, len(text.split()))
+    sentences = max(1, len(text.replace('?', '.').replace('!', '.').split(".")))
+    syllables = sum(1 for char in text.lower() if char in "aeiou")
+    
+    avg_syllables_per_word = syllables / words
+    avg_words_per_sentence = words / sentences
+    
+    if avg_words_per_sentence > 30 or avg_syllables_per_word > 3.0:
+        return 5
+    elif avg_words_per_sentence > 20 or avg_syllables_per_word > 2.5:
+        return 4
+    elif avg_words_per_sentence > 12 or avg_syllables_per_word > 2.0:
+        return 3
+    elif avg_words_per_sentence > 8 or avg_syllables_per_word > 1.5:
+        return 2
+    else:
+        return 1
+
+
 class AnalyzedClause:
     def __init__(
         self,
-        id,
-        clause_text,
-        is_fatal,
-        s1_score,
-        s2_score,
-        s3_score,
-        category,
-        plain_language_summary,
-        mcp_query_hint,
-        legal_reference=None,
-        risky_keywords=None,
-        **kwargs
+        id: str,
+        clause_text: str,
+        is_fatal: bool,
+        s1_score: float,
+        s2_score: float,
+        s3_score: float,
+        category: str,
+        plain_language_summary: str,
+        risky_keywords: list[str],
+        mcp_query_hint: str = "",
+        legal_reference: str = "",
     ):
         self.id = str(id)
         self.clause_text = str(clause_text)
@@ -100,13 +121,21 @@ class AnalyzedClause:
         self.s1_score = parse_score(s1_score)
         self.s2_score = parse_score(s2_score)
         self.s3_score = parse_score(s3_score)
+
+        s = self.s1_score
+        o = self.s3_score
+        d = compute_fry_detection_score(self.clause_text)
         
-        if self.is_fatal:
+        rpn = s * o * d
+        
+        # S=5 is critical regardless of RPN
+        if self.is_fatal or s >= 5.0:
             self.clause_safety_score = 100.0
-            raw_score = 5.0
+            r_level_val = 5
         else:
-            raw_score = (self.s1_score * 0.45) + (self.s2_score * 0.35) + (self.s3_score * 0.20)
-            self.clause_safety_score = ((raw_score - 1) / 4.0) * 100.0
+            self.clause_safety_score = (rpn / 125.0) * 100.0
+            # Map back to 1-5 for risk_level mapping
+            r_level_val = round(1 + (self.clause_safety_score / 100.0) * 4.0)
             
         self.is_flagged = self.clause_safety_score >= 60.0
         self.category = str(category)
@@ -115,7 +144,7 @@ class AnalyzedClause:
         self.legal_reference = str(legal_reference) if legal_reference else ""
         self.risky_keywords = risky_keywords if isinstance(risky_keywords, list) else []
         self.risk_level = SAFETY_SCORE_TO_LEVEL.get(
-            round((raw_score if not self.is_fatal else 5)), "kuning"
+            r_level_val, "kuning"
         )
 
     def to_event_payload(self) -> dict:

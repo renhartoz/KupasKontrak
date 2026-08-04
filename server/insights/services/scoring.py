@@ -37,20 +37,15 @@ def compute_document_score(document) -> tuple[float, list[dict], int]:
     clauses = list(document.clauses.all())
     if not clauses:
         return 0.0, [], 0
-
-    max_score = 0.0
     fatal_count = 0
+    total_score = 0.0
     
     for clause in clauses:
-        if clause.clause_safety_score > max_score:
-            max_score = clause.clause_safety_score
-            
+        total_score += clause.clause_safety_score
         if getattr(clause, "is_fatal", False) or clause.clause_safety_score >= 80.0:
             fatal_count += 1
 
-    base_score = max_score
-    penalty = fatal_count * FATAL_CLAUSE_PENALTY_POINTS
-    overall_score = min(100.0, base_score + penalty)
-
+    overall_score = total_score / len(clauses)
     breakdown = _build_category_breakdown(clauses)
+    
     return round(overall_score, 1), breakdown, fatal_count
