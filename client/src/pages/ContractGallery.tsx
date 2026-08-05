@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api'
 import { Card } from '@/components/ui/card'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FileText, ChevronRight, Loader2, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Document {
   id: string
@@ -15,9 +15,26 @@ interface Document {
   created_at: string
 }
 
-export function EditorList() {
+export function ContractGallery() {
   const navigate = useNavigate()
-  const [search, setSearch] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [search, setSearch] = useState(searchParams.get('search') || '')
+
+  useEffect(() => {
+    const querySearch = searchParams.get('search')
+    if (querySearch !== null) {
+      setSearch(querySearch)
+    }
+  }, [searchParams])
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value)
+    if (e.target.value) {
+      setSearchParams({ search: e.target.value })
+    } else {
+      setSearchParams({})
+    }
+  }
 
   const { data: documents = [], isLoading } = useQuery<Document[]>({
     queryKey: ['documents'],
@@ -27,6 +44,31 @@ export function EditorList() {
     }
   })
 
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+    const evtSource = new EventSource(`${baseUrl}/documents/events/?token=${token}`)
+    
+    evtSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.status) {
+          queryClient.invalidateQueries({ queryKey: ['documents'] })
+        }
+      } catch (e) {
+        console.error("SSE parse error", e)
+      }
+    }
+    
+    return () => {
+      evtSource.close()
+    }
+  }, [queryClient])
+
   const filteredDocs = documents.filter(doc => 
     doc.original_filename.toLowerCase().includes(search.toLowerCase())
   )
@@ -35,9 +77,9 @@ export function EditorList() {
     <div className="max-w-7xl mx-auto space-y-8 animate-fade-in p-2 md:p-4">
       <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl md:text-5xl font-instrument text-primary mb-3 tracking-tight">Koleksi Dokumen</h1>
-          <p className="text-sm font-inter text-muted-foreground max-w-lg">
-            Pilih dokumen yang ingin Anda ulas atau sunting menggunakan Editor AI.
+          <h1 className="text-4xl md:text-5xl font-instrument text-primary mb-3 tracking-tight">Galeri Dokumen</h1>
+          <p className="text-sm font-inter text-muted-foreground">
+            Pilih dokumen yang ingin Anda lihat hasil laporannya atau sunting menggunakan Editor AI.
           </p>
         </div>
       </header>
@@ -48,7 +90,7 @@ export function EditorList() {
           placeholder="Cari nama dokumen..." 
           className="pl-10 h-12 bg-card border-border shadow-sm"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={handleSearchChange}
         />
       </div>
 
@@ -67,7 +109,7 @@ export function EditorList() {
           {filteredDocs.map((doc) => (
             <Card 
               key={doc.id} 
-              onClick={() => navigate(`/editor/${doc.id}`)}
+              onClick={() => navigate(`/results/${doc.id}`)}
               className="p-5 border border-border shadow-sm hover:border-primary/50 transition-all hover:shadow-md cursor-pointer group flex flex-col rounded-xl bg-card"
             >
               <div className="flex items-center justify-between mb-4">
@@ -94,9 +136,15 @@ export function EditorList() {
                 <span className="text-xs font-space text-muted-foreground uppercase tracking-widest font-bold">
                   Skor: {doc.overall_risk_score || 0}/100
                 </span>
-                <div className="flex items-center text-xs font-inter text-primary font-medium group-hover:translate-x-1 transition-transform">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/editor/${doc.id}`);
+                  }}
+                  className="flex items-center text-xs font-inter text-primary font-medium hover:text-primary/80 transition-colors z-10 p-2 -mr-2 rounded hover:bg-muted"
+                >
                   Buka Editor <ChevronRight className="w-4 h-4 ml-1" />
-                </div>
+                </button>
               </div>
             </Card>
           ))}

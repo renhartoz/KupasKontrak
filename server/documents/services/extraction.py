@@ -76,28 +76,45 @@ class OcrSpaceClient:
         return self._extract_page_by_page(file_bytes, filename, doc)
 
     def _send_request(self, file_data: bytes, filename: str, content_type: str, filetype: str) -> str:
-        response = requests.post(
-            self.endpoint,
-            files={"file": (filename, file_data, content_type)},
-            data={
-                "apikey": getattr(settings, "OCR_SPACE_API_KEY", ""),
-                "language": "auto",
-                "OCREngine": 2,
-                "isTable": True,
-                "scale": True,
-                "filetype": filetype,
-            },
-            timeout=60,
-        )
-        response.raise_for_status()
-        result = response.json()
-        if result.get("IsErroredOnProcessing"):
-            error_msg = result.get("ErrorMessage", ["Unknown OCR error"])
-            if isinstance(error_msg, list):
-                error_msg = ", ".join(error_msg)
-            raise OcrExtractionError(str(error_msg))
-        parsed_results = result.get("ParsedResults", [])
-        return "\n".join(page.get("ParsedText", "") for page in parsed_results if page.get("ParsedText"))
+        import time
+        max_retries = 3
+        engines = [2, 1, 1]
+        
+        for attempt, engine in enumerate(engines):
+            try:
+                response = requests.post(
+                    self.endpoint,
+                    files={"file": (filename, file_data, content_type)},
+                    data={
+                        "apikey": getattr(settings, "OCR_SPACE_API_KEY", ""),
+                        "language": "auto",
+                        "OCREngine": engine,
+                        "isTable": True,
+                        "scale": True,
+                        "filetype": filetype,
+                    },
+                    timeout=60,
+                )
+                response.raise_for_status()
+                result = response.json()
+                if result.get("IsErroredOnProcessing"):
+                    error_msg = result.get("ErrorMessage", ["Unknown OCR error"])
+                    if isinstance(error_msg, list):
+                        error_msg = ", ".join(error_msg)
+                    
+                    if "E502" in error_msg or attempt < max_retries - 1:
+                        time.sleep(2)
+                        continue
+                    raise OcrExtractionError(str(error_msg))
+                
+                parsed_results = result.get("ParsedResults", [])
+                return "\n".join(page.get("ParsedText", "") for page in parsed_results if page.get("ParsedText"))
+            
+            except (requests.RequestException, OcrExtractionError) as e:
+                if attempt == max_retries - 1:
+                    raise OcrExtractionError(f"OCR failed after {max_retries} attempts: {str(e)}")
+                time.sleep(2)
+        return ""
 
     def _extract_page_by_page(self, file_bytes: bytes, filename: str, doc) -> str:
         text_parts = []

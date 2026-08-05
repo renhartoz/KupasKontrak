@@ -62,8 +62,18 @@ export function Topbar() {
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input 
             type="text" 
-            placeholder="Search documents..." 
+            placeholder="Cari dokumen... (Tekan Enter)" 
             className="pl-9 h-9 bg-muted/30 border-border text-sm w-full focus-visible:ring-primary rounded-md"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const searchVal = e.currentTarget.value;
+                if (searchVal.trim()) {
+                  navigate(`/gallery?search=${encodeURIComponent(searchVal)}`);
+                } else {
+                  navigate(`/gallery`);
+                }
+              }
+            }}
           />
         </div>
       </div>

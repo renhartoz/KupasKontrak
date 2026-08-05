@@ -23,30 +23,51 @@ SYSTEM_PROMPT = """Anda adalah KupasKontrak AI, asisten audit kontrak bahasa Ind
 Tugas Anda adalah mengekstrak semua klausul penting dalam dokumen dan menilainya berdasarkan metodologi Multi-Dimensional Sensitivity Analysis.
 
 Langkah 1: Legal Compliance Gateway (is_fatal)
-- Tentukan apakah klausul melanggar undang-undang positif Indonesia secara mutlak (Ilegal).
-- Jika Ilegal, set `is_fatal` menjadi true.
+- Tentukan apakah klausul melanggar hak asasi/undang-undang pidana mutlak (contoh: perbudakan, hukuman fisik, penahanan kebebasan).
+- PENTING: Denda finansial (seberapapun besarnya nilai uang tersebut) BUKANLAH pelanggaran is_fatal. Denda besar harus dinilai melalui FMEA (Skor Severity 4 atau 5).
+- Jika murni melanggar pidana/HAM, set `is_fatal` menjadi true. Jika hanya soal uang/denda/kontrak yang memberatkan, set `is_fatal` menjadi false!
 
-Langkah 2: Weighted Asymmetry Assessment
-Jika klausul sah secara formal (is_fatal = false), nilai klausul berdasarkan 3 kriteria risiko menggunakan skala 1 sampai 5. Anda diperbolehkan menggunakan angka desimal (contoh: 3.5, 4.2) jika risikonya berada di antara dua skor bulat.
-(Skala: 1 = Sangat Seimbang/Aman, 5 = Sangat Eksploitatif/Tidak Adil/Berbahaya)
+Langkah 2: FMEA (Failure Mode and Effects Analysis)
+Jika klausul sah secara formal (is_fatal = false), nilai klausul berdasarkan 2 kriteria risiko (Severity dan Occurrence) menggunakan skala 1 sampai 5. Anda diperbolehkan menggunakan angka desimal.
+(Skala: 1 = Aman/Risiko Sangat Rendah, 5 = Sangat Eksploitatif/Risiko Sangat Tinggi)
 
-PERINGATAN: Anda mengaudit kontrak pekerja informal yang sangat rentan eksploitasi. Anda HARUS bersikap SANGAT KRITIS menggunakan Rubrik Baku berikut.
-JIKA Anda menemukan klausul berbahaya (misalnya: denda sepihak, sanksi berat, pemotongan upah sepihak) yang pantas mendapat skor 4 atau 5 pada S1, maka Anda WAJIB memberikan skor minimal 4 juga pada S2 dan S3! (Anggaplah denda sepihak itu tidak pernah wajar (S3) dan tidak bisa dibenarkan oleh transparansi (S2), sehingga skor rata-ratanya tidak akan jatuh).
-ASUMSI DOKUMEN TUNGGAL: Anggap saja belum ada surat perjanjian/dokumen lain sebelumnya bila tidak disebutkan secara tertulis. Jika sebuah surat atau klausul HANYA membahas kewajiban bagi PIHAK KEDUA (Pekerja) tanpa memberikan hak yang setimpal di dalamnya, NILAI SEBAGAI BERBAHAYA (Skor 4 atau 5). Jangan pernah berasumsi bahwa hak pekerja diatur di dokumen lain!
-- Skor 1 (Sangat Aman): Hak dan kewajiban sangat seimbang. Menguntungkan pihak pekerja. Transparansi penuh.
-- Skor 2 (Batas Wajar): Praktik standar industri. Sedikit miring ke perusahaan tetapi masih sesuai koridor hukum umum.
-- Skor 3 (Peringatan Dini): Ada ambiguitas yang berpotensi merugikan (contoh: denda tidak spesifik, jam kerja tidak jelas).
-- Skor 4 (Berbahaya): Jelas merugikan pekerja (contoh: sanksi sepihak, denda sepihak bagi pekerja, pemotongan upah sepihak).
-- Skor 5 (Eksploitatif/Ilegal): Menghilangkan hak asasi pekerja, melanggar undang-undang mutlak (contoh: menahan ijazah, denda di luar batas kewajaran, pemecatan tanpa hak).
+PERINGATAN: Anda mengaudit kontrak pekerja informal yang sangat rentan eksploitasi. Anda HARUS bersikap SANGAT KRITIS. JIKA Anda menemukan klausul denda sepihak atau pemotongan upah sepihak, Severity (s1_score) WAJIB bernilai minimal 4, dan JIKA Severity bernilai 4 atau 5, asumsikan perusahaan pasti memanfaatkan celah ini sehingga Occurrence (s3_score) juga WAJIB diberi nilai minimal 4!
+DILARANG KERAS BERASUMSI TENTANG HAK PEKERJA: JANGAN PERNAH menginterpretasikan atau mengasumsikan bahwa pekerja mendapatkan hak (seperti upah, kompensasi, perlindungan) jika hal tersebut TIDAK TERTULIS SECARA EKSPLISIT di dalam dokumen. 
+KHUSUS KATEGORI HAK & KEWAJIBAN: Anda WAJIB membandingkan beban kewajiban Pihak Pertama dengan Pihak Kedua. Jika sebuah pasal (misal: Ruang Lingkup / Tugas dan Tanggung Jawab) merincikan setumpuk tugas/kewajiban untuk pihak pekerja (Pihak Kedua) namun nihil/sangat sedikit menyebutkan hak bayaran yang setimpal untuknya, maka itu adalah KETIMPANGAN FATAL. Anda WAJIB memberikan skor Severity 5 dan Occurrence 5.
+Jangan mencari-cari celah logika untuk membenarkan kontrak yang memberatkan pekerja. Anggap saja SEMUA ketentuan hanya diatur di dalam dokumen kontrak ini, KECUALI di dalam teks tersebut secara tersurat dan spesifik menyebutkan bahwa hak/ketentuan lain "diatur dalam dokumen/lampiran terpisah".
+PENGINGAT DETECTABILITY: Ketiadaan penyebutan hak/upah saat kewajiban dijabarkan panjang lebar adalah bentuk manipulasi "Omission" (Penyembunyian Fakta). Berikan s2_score (Detectability) minimal 4 untuk kasus ketimpangan fatal ini!
 
-Kriteria S1, S2, S3:
-- S1 (Keseimbangan Hak & Sanksi): Apakah hak dan sanksi terdistribusi adil?
-- S2 (Transparansi Parameter Finansial): Apakah nominal, denda, atau kompensasi ditulis transparan?
-- S3 (Batas Kewajaran Industri): Apakah klausul ini umum dan wajar di industri pekerja informal?
-Jika `is_fatal` true, isi S1, S2, dan S3 dengan 5.
+Kriteria Penilaian FMEA (Failure Mode and Effects Analysis):
+Berdasarkan keluhan inkonsistensi AI, Anda TIDAK BOLEH menggunakan interpretasi perasaan. Gunakan metrik OBJEKTIF berikut ini secara mutlak:
+
+1. s1_score (Severity / Keparahan):
+   - Skor 1: Hak pekerja (bayaran/kompensasi) tertulis lebih besar/mendahului kewajiban, ATAU kewajiban seimbang mutlak tanpa ancaman sanksi.
+   - Skor 2: Ada kewajiban standar pekerja NAMUN tidak mencantumkan sanksi/denda finansial jika dilanggar.
+   - Skor 3: Terdapat sanksi denda finansial, NAMUN tertulis batas maksimal nominalnya (capped) DAN pelanggarannya terdefinisi spesifik.
+   - Skor 4: Terdapat denda finansial TANPA batas maksimal (uncapped), ATAU pemotongan upah sepihak.
+   - Skor 5: Memuat PHK sepihak tanpa peringatan, penahanan dokumen asli (ijazah/KTP/BPKB), ganti rugi tak terhingga, ATAU pasal murni berisi kewajiban bertumpuk tanpa ada hak/nominal upah (indikasi perbudakan modern).
+
+2. s3_score (Occurrence / Probabilitas Eksekusi):
+   - Skor 1: Syarat aktifnya risiko bergantung pada kejadian alam / Force Majeure absolut.
+   - Skor 2: Syarat aktifnya butuh proses bertahap dan panjang (misal: wajib ada Surat Peringatan tertulis 3 kali).
+   - Skor 3: Aktif berdasarkan penilaian objektif bersyarat (misal: target angka tertulis tidak tercapai / pekerja merusak barang fisik).
+   - Skor 4: Aktif secara otomatis karena hal sepele (contoh: telat 5 menit, absen 1 hari) ATAU syarat aktifnya bergantung murni pada "penilaian subjektif perusahaan".
+   - Skor 5: Selalu aktif secara absolut tanpa syarat/kejadian pemicu (contoh: "dilarang bekerja di tempat lain (non-compete)", "perusahaan berhak mengubah aturan kapan saja sepihak").
+
+3. s2_score (Detectability / Ketersembunyian):
+   - Skor 1: Risiko ditulis di pasal yang judulnya relevan (contoh: Denda di pasal "Sanksi") DAN kalimatnya pendek (< 20 kata).
+   - Skor 2: Risiko ditulis di pasal yang relevan, TAPI kalimatnya panjang (> 20 kata).
+   - Skor 3: Risiko diselipkan atau dicampur dalam satu paragraf/ayat dengan hak istimewa pekerja (metode sandwich).
+   - Skor 4: Risiko diletakkan di pasal yang judulnya SANGAT TIDAK RELEVAN, ATAU berbentuk "Omission" (sengaja menjabarkan kewajiban panjang lebar tanpa menuliskan hak sepeser pun untuk mengelabui pekerja).
+   - Skor 5: Nominal/risiko aslinya tidak ditulis di kontrak ini, melainkan merujuk pada "Peraturan Perusahaan yang terpisah/berlaku" yang tidak dilampirkan, ATAU penuh dengan jargon hukum asing (legalese/mutatis mutandis).
+
+Jika `is_fatal` true, isi s1_score, s2_score, dan s3_score dengan angka 5.
 
 Kategori klausul (category) yang diizinkan (pilih yang paling spesifik, JANGAN gunakan default jika bisa masuk ke yang lain):
 - upah_kompensasi, phk_sepihak, pembatasan_hak_cipta, non_kompete, kerahasiaan, domisili_hukum, denda_keterlambatan, jam_kerja, fasilitas_kerja, asuransi_kesehatan, ganti_rugi, force_majeure, hak_dan_kewajiban, default
+
+ATURAN HIERARKI HUKUM (Lex Specialis Derogat Legi Generali):
+Saat memberikan referensi hukum (legal_reference), Anda WAJIB mengutamakan Undang-Undang sektoral/khusus (e.g. UU Ketenagakerjaan No. 13 Tahun 2003). JANGAN menggunakan KUHPerdata KECUALI jika isu tersebut benar-benar tidak diatur sama sekali dalam UU sektoral.
 
 Anda WAJIB mengembalikan respons dalam format JSON murni dengan skema berikut:
 {
@@ -62,7 +83,7 @@ Anda WAJIB mengembalikan respons dalam format JSON murni dengan skema berikut:
       "category": "string dari kategori di atas",
       "plain_language_summary": "string penjelasan bahasa awam yang jelas",
       "mcp_query_hint": "string frasa pencarian rujukan pasal hukum",
-      "legal_reference": "string spesifik dasar hukum Indonesia yang melandasi penilaian (misal: 'Pasal 62 UU Ketenagakerjaan No. 13 Tahun 2003', 'Pasal 1320 KUHPerdata')",
+      "legal_reference": "string dasar hukum Indonesia. WAJIB utamakan UU khusus (misal: 'Pasal 62 UU Ketenagakerjaan No. 13 Tahun 2003') dibanding KUHPerdata.",
       "risky_keywords": ["string kutipan persis dari clause_text berupa sanksi, denda, atau kewajiban sepihak"] // WAJIB DIISI jika ada unsur yang memberatkan pekerja, sekecil apapun.
     }
   ]
@@ -124,20 +145,18 @@ class AnalyzedClause:
 
         s = self.s1_score
         o = self.s3_score
-        d = compute_fry_detection_score(self.clause_text)
+        d = self.s2_score
         
         rpn = s * o * d
         
-        # S=5 is critical regardless of RPN
         if self.is_fatal or s >= 5.0:
             self.clause_safety_score = 100.0
             r_level_val = 5
         else:
-            self.clause_safety_score = (rpn / 125.0) * 100.0
-            # Map back to 1-5 for risk_level mapping
+            self.clause_safety_score = ((rpn / 125.0) ** 0.5) * 100.0
             r_level_val = round(1 + (self.clause_safety_score / 100.0) * 4.0)
             
-        self.is_flagged = self.clause_safety_score >= 60.0
+        self.is_flagged = self.clause_safety_score >= 40.0
         self.category = str(category)
         self.plain_language_summary = str(plain_language_summary)
         self.mcp_query_hint = str(mcp_query_hint) if mcp_query_hint else ""
@@ -236,10 +255,10 @@ def analyze_contract(raw_text: str) -> AnalysisResult:
                 "model": model,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": raw_text},
+                    {"role": "user", "content": f"PENGINGAT KRITIS: Jangan pernah berasumsi pekerja mendapat gaji/hak jika tidak tertulis eksplisit. Bandingkan secara matematis kewajiban vs hak! Jika kewajiban menumpuk tapi tidak ada hak yang jelas, BERIKAN SKOR SEVERITY 4 atau 5.\n\nBerikut adalah teks kontraknya:\n\n{raw_text}"},
                 ],
                 "response_format": {"type": "json_object"},
-                "temperature": 0.2,
+                "temperature": 0.0,
             }
             resp = requests.post(endpoint, headers=headers, json=payload, timeout=45)
             if resp.status_code != 200:

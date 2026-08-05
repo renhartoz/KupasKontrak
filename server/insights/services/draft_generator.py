@@ -11,7 +11,7 @@ def generate_draft(document, user, draft_type, custom_instructions=None) -> Gene
     flagged_summary = "\n".join(
         f"- ID: {c.id} | Skor: {c.clause_safety_score} | Teks: {c.clause_text} | Kategori: {c.category}"
         for c in clauses
-        if c.clause_safety_score >= 60.0
+        if c.clause_safety_score >= 40.0
     )
 
     instructions_part = f"\nInstruksi Tambahan Pengguna: {custom_instructions}" if custom_instructions else ""
@@ -79,7 +79,7 @@ def generate_draft(document, user, draft_type, custom_instructions=None) -> Gene
                         "rationale": "Menyeimbangkan posisi tawar kedua belah pihak.",
                     }
                     for c in clauses
-                    if c.clause_safety_score >= 60.0
+                    if c.clause_safety_score >= 40.0
                 ]
             }
         else:

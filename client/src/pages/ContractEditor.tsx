@@ -87,9 +87,39 @@ export function ContractEditor() {
 
   if (isLoading) {
     return (
-      <div className="h-[calc(100vh-160px)] flex flex-col w-full border border-border rounded-xl overflow-hidden shadow-sm bg-card animate-fade-in min-h-[500px] items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-        <h2 className="text-2xl font-instrument text-primary">Memuat Dokumen...</h2>
+      <div className="h-[calc(100vh-160px)] min-h-[500px] flex w-full border border-border rounded-xl overflow-hidden shadow-sm bg-card animate-pulse">
+        {/* Skeleton Sidebar / Chat */}
+        <div className="w-[400px] hidden xl:flex flex-col border-r border-border bg-muted/20 p-4">
+          <div className="h-8 bg-muted rounded-md w-1/3 mb-6"></div>
+          <div className="h-20 bg-muted/50 rounded-xl mb-4"></div>
+          <div className="h-10 bg-muted/40 rounded-lg mb-2"></div>
+          <div className="h-10 bg-muted/30 rounded-lg"></div>
+          <div className="mt-auto h-12 bg-muted/50 rounded-lg"></div>
+        </div>
+        
+        {/* Skeleton Editor */}
+        <div className="flex-1 p-8 bg-background flex flex-col">
+          <div className="flex justify-between items-center mb-12">
+            <div className="h-6 bg-muted rounded w-1/4"></div>
+            <div className="h-8 bg-primary/20 rounded w-24"></div>
+          </div>
+          <div className="h-10 bg-muted/80 rounded mb-6 w-3/4 mx-auto"></div>
+          <div className="space-y-4 max-w-3xl mx-auto w-full mt-8">
+            <div className="h-4 bg-muted/60 rounded w-full"></div>
+            <div className="h-4 bg-muted/60 rounded w-[90%]"></div>
+            <div className="h-4 bg-muted/60 rounded w-[95%]"></div>
+            <div className="h-4 bg-muted/60 rounded w-[80%] mb-8"></div>
+            
+            <div className="p-6 bg-muted/30 border-l-4 border-muted rounded-r-lg mb-6">
+              <div className="h-5 bg-muted/80 rounded w-1/4 mb-4"></div>
+              <div className="h-4 bg-muted/60 rounded w-full mb-2"></div>
+              <div className="h-4 bg-muted/60 rounded w-[85%]"></div>
+            </div>
+            
+            <div className="h-4 bg-muted/60 rounded w-[90%]"></div>
+            <div className="h-4 bg-muted/60 rounded w-full"></div>
+          </div>
+        </div>
       </div>
     )
   }
