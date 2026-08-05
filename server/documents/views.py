@@ -131,6 +131,7 @@ async def document_events_view(request, pk=None):
 
     async def event_stream():
         last_statuses = {}
+        first_iteration = True
         while True:
             try:
                 if pk:
@@ -144,14 +145,17 @@ async def document_events_view(request, pk=None):
                     current_status = doc.status
                     
                     if last_statuses.get(doc_id) != current_status:
-                        payload = {
-                            "id": doc_id,
-                            "status": current_status,
-                            "is_processing": current_status not in [Document.Status.DONE, Document.Status.FAILED]
-                        }
-                        yield f"data: {json.dumps(payload)}\n\n"
+                        if not first_iteration:
+                            payload = {
+                                "id": doc_id,
+                                "status": current_status,
+                                "is_processing": current_status not in [Document.Status.DONE, Document.Status.FAILED]
+                            }
+                            yield f"data: {json.dumps(payload)}\n\n"
+                            events_emitted = True
                         last_statuses[doc_id] = current_status
-                        events_emitted = True
+                        
+                first_iteration = False
                         
                 if pk and last_statuses.get(str(pk)) in [Document.Status.DONE, Document.Status.FAILED]:
                     break

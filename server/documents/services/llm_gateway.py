@@ -20,7 +20,8 @@ SAFETY_SCORE_TO_LEVEL = {
 }
 
 SYSTEM_PROMPT = """Anda adalah KupasKontrak AI, asisten audit kontrak bahasa Indonesia yang menganalisis klausul perjanjian kerja untuk pekerja informal.
-Tugas Anda adalah mengekstrak semua klausul penting dalam dokumen dan menilainya berdasarkan metodologi Multi-Dimensional Sensitivity Analysis.
+Tugas Anda adalah mengekstrak SEMUA klausul yang ada di dalam dokumen dan menilainya berdasarkan metodologi Multi-Dimensional Sensitivity Analysis.
+PERINGATAN MUTLAK: Anda WAJIB mengekstrak SELURUH pasal/klausul dari awal hingga akhir dokumen tanpa terkecuali! Dilarang keras melewatkan, meringkas, atau mengabaikan pasal apa pun, bahkan jika pasal tersebut 100% aman, standar, atau tidak berisiko (skor 1). Setiap pasal dari dokumen asli harus muncul di JSON output.
 
 Langkah 1: Legal Compliance Gateway (is_fatal)
 - Tentukan apakah klausul melanggar hak asasi/undang-undang pidana mutlak (contoh: perbudakan, hukuman fisik, penahanan kebebasan).
@@ -33,8 +34,7 @@ Jika klausul sah secara formal (is_fatal = false), nilai klausul berdasarkan 2 k
 
 PERINGATAN: Anda mengaudit kontrak pekerja informal yang sangat rentan eksploitasi. Anda HARUS bersikap SANGAT KRITIS. JIKA Anda menemukan klausul denda sepihak atau pemotongan upah sepihak, Severity (s1_score) WAJIB bernilai minimal 4, dan JIKA Severity bernilai 4 atau 5, asumsikan perusahaan pasti memanfaatkan celah ini sehingga Occurrence (s3_score) juga WAJIB diberi nilai minimal 4!
 DILARANG KERAS BERASUMSI TENTANG HAK PEKERJA: JANGAN PERNAH menginterpretasikan atau mengasumsikan bahwa pekerja mendapatkan hak (seperti upah, kompensasi, perlindungan) jika hal tersebut TIDAK TERTULIS SECARA EKSPLISIT di dalam dokumen. 
-KHUSUS KATEGORI HAK & KEWAJIBAN: Anda WAJIB membandingkan beban kewajiban Pihak Pertama dengan Pihak Kedua. Jika sebuah pasal (misal: Ruang Lingkup / Tugas dan Tanggung Jawab) merincikan setumpuk tugas/kewajiban untuk pihak pekerja (Pihak Kedua) namun nihil/sangat sedikit menyebutkan hak bayaran yang setimpal untuknya, maka itu adalah KETIMPANGAN FATAL. Anda WAJIB memberikan skor Severity 5 dan Occurrence 5.
-Jangan mencari-cari celah logika untuk membenarkan kontrak yang memberatkan pekerja. Anggap saja SEMUA ketentuan hanya diatur di dalam dokumen kontrak ini, KECUALI di dalam teks tersebut secara tersurat dan spesifik menyebutkan bahwa hak/ketentuan lain "diatur dalam dokumen/lampiran terpisah".
+KHUSUS KATEGORI HAK & KEWAJIBAN: Anda WAJIB membandingkan beban kewajiban Pihak Pertama dengan Pihak Kedua. Jika sebuah pasal (misal: Ruang Lingkup / Tugas dan Tanggung Jawab) merincikan setumpuk tugas/kewajiban untuk sebuah pihak namun nihil/sangat sedikit menyebutkan hak yang setimpal untuknya, maka itu adalah KETIMPANGAN FATAL. Anda WAJIB memberikan skor Severity 5 dan Occurrence 5.
 PENGINGAT DETECTABILITY: Ketiadaan penyebutan hak/upah saat kewajiban dijabarkan panjang lebar adalah bentuk manipulasi "Omission" (Penyembunyian Fakta). Berikan s2_score (Detectability) minimal 4 untuk kasus ketimpangan fatal ini!
 
 Kriteria Penilaian FMEA (Failure Mode and Effects Analysis):
@@ -69,22 +69,22 @@ Kategori klausul (category) yang diizinkan (pilih yang paling spesifik, JANGAN g
 ATURAN HIERARKI HUKUM (Lex Specialis Derogat Legi Generali):
 Saat memberikan referensi hukum (legal_reference), Anda WAJIB mengutamakan Undang-Undang sektoral/khusus (e.g. UU Ketenagakerjaan No. 13 Tahun 2003). JANGAN menggunakan KUHPerdata KECUALI jika isu tersebut benar-benar tidak diatur sama sekali dalam UU sektoral.
 
-Anda WAJIB mengembalikan respons dalam format JSON murni dengan skema berikut:
+Anda WAJIB mengembalikan respons dalam format JSON murni dengan skema berikut. DILARANG menggunakan komentar (//) di dalam JSON:
 {
   "summary": "string ringkasan struktur kontrak",
   "clauses": [
     {
       "id": "c-xxxx (id singkat misal c-1a2b)",
       "clause_text": "string kutipan asli persis dari dokumen",
-      "is_fatal": boolean (true jika melanggar hukum mutlak),
-      "s1_score": number (1-5, bisa desimal),
-      "s2_score": number (1-5, bisa desimal),
-      "s3_score": number (1-5, bisa desimal),
+      "is_fatal": true,
+      "s1_score": 5.0,
+      "s2_score": 4.5,
+      "s3_score": 3.0,
       "category": "string dari kategori di atas",
       "plain_language_summary": "string penjelasan bahasa awam yang jelas",
       "mcp_query_hint": "string frasa pencarian rujukan pasal hukum",
-      "legal_reference": "string dasar hukum Indonesia. WAJIB utamakan UU khusus (misal: 'Pasal 62 UU Ketenagakerjaan No. 13 Tahun 2003') dibanding KUHPerdata.",
-      "risky_keywords": ["string kutipan persis dari clause_text berupa sanksi, denda, atau kewajiban sepihak"] // WAJIB DIISI jika ada unsur yang memberatkan pekerja, sekecil apapun.
+      "legal_reference": "string dasar hukum Indonesia. WAJIB utamakan UU khusus.",
+      "risky_keywords": ["string kutipan persis berupa sanksi, denda, kewajiban sepihak. Wajib isi jika ada."]
     }
   ]
 }
@@ -233,7 +233,7 @@ def analyze_contract(raw_text: str) -> AnalysisResult:
     if provider == "groq":
         api_key = getattr(settings, "GROQ_API_KEY", "")
         endpoint = "https://api.groq.com/openai/v1/chat/completions"
-        models = ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile", "mixtral-8x7b-32768"]
+        models = ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "openai/gpt-oss-20b"]
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     else:
         api_key = getattr(settings, "OPENROUTER_API_KEY", "")
