@@ -241,7 +241,7 @@ def analyze_contract(raw_text: str) -> AnalysisResult:
         models = getattr(
             settings,
             "OPENROUTER_MODEL_CHAIN",
-            ["x-ai/grok-4.1-fast", "google/gemini-2.5-flash", "openai/gpt-oss-120b"],
+            ["google/gemini-2.5-flash", "openai/gpt-oss-120b"],
         )
         headers = {
             "Authorization": f"Bearer {api_key}",

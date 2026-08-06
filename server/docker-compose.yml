@@ -1,9 +1,6 @@
 services:
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
     ports:
       - "8000:8000"
     env_file:
@@ -12,7 +9,5 @@ services:
   celery:
     build: .
     command: celery -A config worker -l info
-    volumes:
-      - .:/app
     env_file:
       - config/.env

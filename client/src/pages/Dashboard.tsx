@@ -35,7 +35,7 @@ export function Dashboard() {
     const token = localStorage.getItem('token')
     if (!token) return
     
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/v1'
     const evtSource = new EventSource(`${baseUrl}/documents/events/?token=${token}`)
     
     evtSource.onmessage = (event) => {

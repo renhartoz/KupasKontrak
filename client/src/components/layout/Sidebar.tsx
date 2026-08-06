@@ -18,9 +18,7 @@ export function Sidebar() {
     <aside className="hidden md:flex flex-col w-64 h-screen border-r border-border bg-card/95 backdrop-blur shrink-0">
       <div className="p-6">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary text-primary-foreground flex items-center justify-center font-instrument text-2xl rounded-sm">
-            K
-          </div>
+          <img src="/KupasKontrak.png" alt="KupasKontrak Logo" className="w-8 h-8 object-contain" />
           <span className="font-instrument text-2xl text-foreground tracking-tight">
             KupasKontrak
           </span>

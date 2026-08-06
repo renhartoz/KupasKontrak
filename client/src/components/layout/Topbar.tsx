@@ -29,7 +29,7 @@ export function Topbar() {
     const token = localStorage.getItem('token')
     if (!token) return
     
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/v1'
     const evtSource = new EventSource(`${baseUrl}/documents/events/?token=${token}`)
     
     evtSource.onmessage = (event) => {
@@ -51,9 +51,8 @@ export function Topbar() {
     <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur h-16 shrink-0 flex items-center justify-between px-4 lg:px-8">
       {/* Mobile Logo */}
       <Link to="/" className="md:hidden flex items-center gap-2">
-        <div className="w-8 h-8 bg-primary text-primary-foreground flex items-center justify-center font-instrument text-2xl rounded-sm">
-          K
-        </div>
+        <img src="/KupasKontrak.png" alt="KupasKontrak Logo" className="w-8 h-8 object-contain" />
+        <span className="font-instrument text-xl text-primary font-medium tracking-tight">KupasKontrak</span>
       </Link>
 
       {/* Desktop Search */}
