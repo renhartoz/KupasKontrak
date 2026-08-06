@@ -56,19 +56,19 @@ export function LandingSecurity() {
           <div className="bg-card border border-border shadow-lg rounded-2xl p-8 flex flex-col justify-center">
             <h3 className="text-lg font-space uppercase tracking-widest text-primary font-bold mb-6 text-center">Infrastruktur Keamanan</h3>
             <ul className="space-y-4">
-              <li className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border/50">
+              <li className="flex flex-wrap items-center justify-between gap-2 p-4 bg-muted/50 rounded-lg border border-border/50">
                 <span className="font-inter text-sm font-medium">Private Signed URLs</span>
                 <span className="text-xs text-muted-foreground">Enkripsi Akses Sesaat</span>
               </li>
-              <li className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border/50">
+              <li className="flex flex-wrap items-center justify-between gap-2 p-4 bg-muted/50 rounded-lg border border-border/50">
                 <span className="font-inter text-sm font-medium">Event Sourcing Logs</span>
                 <span className="text-xs text-muted-foreground">Jejak Audit Immutable</span>
               </li>
-              <li className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border/50">
+              <li className="flex flex-wrap items-center justify-between gap-2 p-4 bg-muted/50 rounded-lg border border-border/50">
                 <span className="font-inter text-sm font-medium">Passive Scanning</span>
                 <span className="text-xs text-muted-foreground">Isolasi Proses Latar Belakang</span>
               </li>
-              <li className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border/50">
+              <li className="flex flex-wrap items-center justify-between gap-2 p-4 bg-muted/50 rounded-lg border border-border/50">
                 <span className="font-inter text-sm font-medium">Anti-DDoS Protection</span>
                 <span className="text-xs text-muted-foreground">Didukung Cloudinary</span>
               </li>

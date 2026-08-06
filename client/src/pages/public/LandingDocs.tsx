@@ -14,16 +14,16 @@ export function LandingDocs() {
             </p>
           </div>
 
-          <div className="bg-card border border-border shadow-md rounded-3xl p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="bg-card border border-border shadow-md rounded-3xl p-6 md:p-12 mb-12 flex flex-col md:flex-row md:items-center justify-between gap-8 overflow-hidden">
             <div className="flex-1">
               <h2 className="text-2xl font-space font-bold text-primary tracking-widest uppercase mb-4">Rumus Risiko (RPN)</h2>
               <p className="text-muted-foreground font-inter mb-6">
                 Setiap klausul kontrak akan dinilai dari 3 dimensi (Skala 1-5). Ketiga nilai ini dikalikan untuk menghasilkan <strong>Risk Priority Number (RPN)</strong>. Semakin tinggi angkanya, semakin fatal klausul tersebut.
               </p>
-              <div className="inline-flex items-center gap-3 bg-muted/50 border border-border/50 px-6 py-4 rounded-xl text-lg font-space font-bold">
-                <span className="text-destructive">RPN</span> = 
-                <span className="text-orange-500">Severity</span> × 
-                <span className="text-blue-500">Occurrence</span> × 
+              <div className="inline-flex flex-wrap items-center gap-2 md:gap-3 bg-muted/50 border border-border/50 px-4 md:px-6 py-3 md:py-4 rounded-xl text-sm md:text-lg font-space font-bold break-words w-full md:w-auto justify-center">
+                <span className="text-destructive">RPN</span> <span className="text-muted-foreground">=</span> 
+                <span className="text-orange-500">Severity</span> <span className="text-muted-foreground">×</span> 
+                <span className="text-blue-500">Occurrence</span> <span className="text-muted-foreground">×</span> 
                 <span className="text-purple-500">Detectability</span>
               </div>
             </div>
