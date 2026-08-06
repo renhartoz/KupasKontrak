@@ -1,4 +1,4 @@
-import { ArrowRight, AlertTriangle, Activity, Eye, PlayCircle, Search, MessageSquare, FileText } from 'lucide-react'
+import { AlertTriangle, Activity, Eye, PlayCircle, Search, MessageSquare, FileText } from 'lucide-react'
 
 export function LandingDocs() {
   return (
