@@ -2,9 +2,48 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import { api } from '@/api'
+import { useState } from 'react'
+
+declare global {
+  interface Window {
+    snap: any
+  }
+}
 
 export function Pricing() {
   const { user } = useAuth()
+  const [loading, setLoading] = useState(false)
+
+  const handleUpgrade = async () => {
+    try {
+      setLoading(true)
+      const res = await api.post('/billing/transaction/', { plan: 'profesional' })
+      const token = res.data.token
+      
+      window.snap.pay(token, {
+        onSuccess: async function() {
+          try {
+            await api.post(`/billing/status/${res.data.order_id}/`)
+            window.location.reload()
+          } catch (e) {
+            window.location.reload()
+          }
+        },
+        onPending: function() {
+          setLoading(false)
+        },
+        onError: function() {
+          setLoading(false)
+        },
+        onClose: function() {
+          setLoading(false)
+        }
+      })
+    } catch (error) {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-12 py-12 animate-fade-in">
@@ -54,7 +93,7 @@ export function Pricing() {
           <h2 className="text-3xl font-instrument text-primary mb-2">B2B Profesional</h2>
           <p className="text-sm font-inter text-muted-foreground mb-6">Paket komprehensif untuk tim legal dan perusahaan berkembang.</p>
           <div className="mb-8">
-            <span className="text-5xl font-instrument">Rp 499k</span>
+            <span className="text-5xl font-instrument">Rp 49k</span>
             <span className="text-sm font-inter text-muted-foreground">/bulan</span>
           </div>
           <ul className="space-y-4 mb-8 flex-1">
@@ -66,20 +105,18 @@ export function Pricing() {
               <Check className="w-5 h-5 text-primary shrink-0" />
               <span>Analisis Risiko Mendalam (AI Lanjutan)</span>
             </li>
-            <li className="flex items-start gap-3 text-sm font-inter text-foreground">
-              <Check className="w-5 h-5 text-primary shrink-0" />
-              <span>Hingga 10 Anggota Tim</span>
-            </li>
+
             <li className="flex items-start gap-3 text-sm font-inter text-foreground">
               <Check className="w-5 h-5 text-primary shrink-0" />
               <span>Integrasi Editor Dokumen Premium</span>
             </li>
           </ul>
           <Button 
-            disabled={user?.tier === 'b2b_profesional'}
+            disabled={user?.tier === 'b2b_profesional' || loading}
+            onClick={handleUpgrade}
             className={`w-full font-space text-xs uppercase tracking-widest h-11 ${user?.tier === 'b2b_profesional' ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}
           >
-            {user?.tier === 'b2b_profesional' ? 'Paket Saat Ini' : 'Beralih ke Pro'}
+            {user?.tier === 'b2b_profesional' ? 'Paket Saat Ini' : loading ? 'Memproses...' : 'Beralih ke Pro'}
           </Button>
         </Card>
 

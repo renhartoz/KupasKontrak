@@ -50,6 +50,7 @@ LOCAL_APPS = [
     "chat",
     "accounts",
     "insights",
+    "billing",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -152,17 +153,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=int(
-            env(
-                "SIMPLE_JWT_ACCESS_TOKEN_LIFETIME_MINUTES",
-                default=env("JWT_ACCESS_TOKEN_LIFETIME_MIN", default=60),
-            )
-        )
-    ),
-    "REFRESH_TOKEN_LIFETIME": timedelta(
-        days=int(env("SIMPLE_JWT_REFRESH_TOKEN_LIFETIME_DAYS", default=7))
-    ),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=env.int("SIMPLE_JWT_ACCESS_TOKEN_LIFETIME_MINUTES", default=60)),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=env.int("SIMPLE_JWT_REFRESH_TOKEN_LIFETIME_DAYS", default=7)),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
@@ -172,6 +164,11 @@ SIMPLE_JWT = {
     "AUTH_COOKIE_SAMESITE": "Lax",
     "AUTH_COOKIE_SECURE": not DEBUG,
 }
+
+# MIDTRANS CONFIGURATION
+MIDTRANS_IS_PRODUCTION = env.bool("MIDTRANS_IS_PRODUCTION", default=False)
+MIDTRANS_SERVER_KEY = env.str("MIDTRANS_SERVER_KEY", default="")
+MIDTRANS_CLIENT_KEY = env.str("MIDTRANS_CLIENT_KEY", default="")
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "KupasKontrak API",

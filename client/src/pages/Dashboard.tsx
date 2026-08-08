@@ -195,10 +195,7 @@ export function Dashboard() {
               <span className="text-muted-foreground">Sisa Kuota:</span>
               <span className="font-bold text-foreground">{isB2B ? 'Tak Terbatas' : '3 / Bulan'}</span>
             </div>
-            <div className="flex justify-between items-center text-sm font-inter">
-              <span className="text-muted-foreground">Pengguna:</span>
-              <span className="font-bold text-foreground">{isB2B ? '5 / 10 Seat' : '1 Seat'}</span>
-            </div>
+
           </div>
           <div className="mt-auto pt-4">
             <Button onClick={() => navigate('/pricing')} className="w-full rounded-md font-space text-xs font-bold uppercase tracking-widest h-11 bg-amber-500 hover:bg-amber-600 text-white cursor-pointer">
