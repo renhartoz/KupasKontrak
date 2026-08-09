@@ -35,15 +35,11 @@ jobs:
         uses: azure/container-apps-deploy-action@v2
         with:
           appSourcePath: ${{ github.workspace }}/server
-          _dockerfilePathKey_: _dockerfilePath_
-          _targetLabelKey_: _targetLabel_
           registryUrl: docker.io
           registryUsername: ${{ secrets.CELERYKUPASKONTRAK_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.CELERYKUPASKONTRAK_REGISTRY_PASSWORD }}
           containerAppName: celery-kupaskontrak
           resourceGroup: rg-kupaskontrak
           imageToBuild: renhartoz/celery-kupaskontrak:${{ github.sha }}
-          _buildArgumentsKey_: |
-            _buildArgumentsValues_
 
 
