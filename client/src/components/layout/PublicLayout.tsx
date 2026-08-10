@@ -1,10 +1,9 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { Menu, X } from 'lucide-react'
+import { Home, ShieldCheck, BookOpen, CreditCard } from 'lucide-react'
 
 export function PublicLayout() {
   const [isScrolled, setIsScrolled] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
 
   useEffect(() => {
@@ -15,19 +14,15 @@ export function PublicLayout() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  useEffect(() => {
-    setMobileMenuOpen(false)
-  }, [location.pathname])
-
   const navLinks = [
-    { name: 'Beranda', path: '/' },
-    { name: 'Keamanan', path: '/security' },
-    { name: 'Dokumentasi', path: '/docs' },
-    { name: 'Harga', path: '/solutions' },
+    { name: 'Beranda', path: '/', icon: Home },
+    { name: 'Keamanan', path: '/security', icon: ShieldCheck },
+    { name: 'Dokumentasi', path: '/docs', icon: BookOpen },
+    { name: 'Harga', path: '/solutions', icon: CreditCard },
   ]
 
   return (
-    <div className="min-h-screen flex flex-col bg-background font-inter selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen flex flex-col bg-background font-inter selection:bg-primary/20 selection:text-primary pb-16 md:pb-0">
       {/* Header */}
       <header 
         className={`fixed top-0 w-full z-50 transition-all duration-300 ${
@@ -51,7 +46,7 @@ export function PublicLayout() {
                 key={link.path} 
                 to={link.path} 
                 className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === link.path ? 'text-primary' : 'text-muted-foreground'
+                  (location.pathname === link.path || (link.path !== '/' && location.pathname.startsWith(link.path))) ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
                 {link.name}
@@ -69,40 +64,11 @@ export function PublicLayout() {
             </Link>
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button 
-            className="md:hidden text-foreground p-1"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Mobile Login Button */}
+          <Link to="/login" className="md:hidden bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md text-xs font-space uppercase tracking-widest transition-all">
+            Masuk
+          </Link>
         </div>
-
-        {/* Mobile Nav */}
-        {mobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-background border-b border-border shadow-lg py-4 px-4 flex flex-col gap-4 animate-in slide-in-from-top-2">
-            {navLinks.map(link => (
-              <Link 
-                key={link.path} 
-                to={link.path} 
-                className={`text-base font-medium py-2 px-4 rounded-md transition-colors ${
-                  location.pathname === link.path ? 'bg-muted text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-            <div className="h-px bg-border my-2"></div>
-            <div className="flex flex-col gap-2">
-              <Link to="/login" className="w-full text-center py-2 text-sm font-medium text-foreground hover:bg-muted rounded-md transition-colors">
-                Masuk
-              </Link>
-              <Link to="/register" className="w-full text-center bg-primary text-primary-foreground hover:bg-primary/90 py-2 rounded-md text-sm font-space uppercase tracking-widest transition-colors">
-                Coba Gratis
-              </Link>
-            </div>
-          </div>
-        )}
       </header>
 
       {/* Main Content */}
@@ -145,6 +111,26 @@ export function PublicLayout() {
           </div>
         </div>
       </footer>
+
+      {/* Mobile Bottom Nav */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-card/95 backdrop-blur border-t border-border flex items-center justify-around z-50 px-2 pb-safe">
+        {navLinks.map((link) => {
+          const isActive = location.pathname === link.path || (link.path !== '/' && location.pathname.startsWith(link.path))
+          const Icon = link.icon
+          return (
+            <Link
+              key={link.name}
+              to={link.path}
+              className={`flex flex-col items-center justify-center w-full h-full gap-1 ${
+                isActive ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <Icon className={`w-5 h-5 ${isActive ? 'fill-primary/20 text-primary' : ''}`} />
+              <span className="text-[10px] font-medium font-inter">{link.name}</span>
+            </Link>
+          )
+        })}
+      </nav>
     </div>
   )
 }
