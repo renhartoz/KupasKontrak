@@ -83,7 +83,20 @@ export function RiskResults() {
           </p>
         </div>
         <div className="flex items-center gap-4 shrink-0">
-          <Button variant="outline" className="border-border text-foreground hover:bg-muted font-space text-xs tracking-widest uppercase rounded-md shadow-sm">
+          <Button 
+            variant="outline" 
+            className="border-border text-foreground hover:bg-muted font-space text-xs tracking-widest uppercase rounded-md shadow-sm"
+            onClick={async () => {
+              try {
+                const res = await api.post(`/documents/${id}/export/`, { format: 'report_pdf' })
+                if (res.data?.download_url) {
+                  window.open(res.data.download_url, '_blank')
+                }
+              } catch (e) {
+                alert('Gagal mengekspor laporan.')
+              }
+            }}
+          >
             Ekspor Laporan
           </Button>
           <Button onClick={() => navigate(`/editor/${id}`)} className="bg-primary text-primary-foreground hover:bg-primary/90 font-space text-xs tracking-widest uppercase rounded-md shadow-sm">

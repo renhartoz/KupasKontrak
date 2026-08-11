@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '@/api'
 import ReactMarkdown from 'react-markdown'
 import { SecurePdfViewer } from '../audit-result/SecurePdfViewer'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 interface DocumentEditorProps {
   document: any
@@ -200,24 +201,58 @@ export function DocumentEditor({ document, selectedClauseId, onSelectClause, onA
           </Button>
         )}
         
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="text-foreground hover:bg-muted font-space text-[10px] tracking-widest uppercase flex gap-2"
-          onClick={async () => {
-             try {
-                const res = await api.post(`/documents/${document.id}/export/`, { format: 'pdf' })
-                if (res.data?.download_url) {
-                   window.open(res.data.download_url, '_blank')
-                }
-             } catch (e) {
-                alert('Gagal mengekspor dokumen atau fitur ini memerlukan paket Pro B2B.')
-             }
-          }}
-        >
-          <Download className="w-4 h-4" />
-          Ekspor
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-foreground hover:bg-muted font-space text-[10px] tracking-widest uppercase flex gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Ekspor
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-2 bg-card border border-border shadow-md rounded-md" align="end" sideOffset={10}>
+            <div className="flex flex-col gap-1">
+              <button 
+                onClick={async () => {
+                  try {
+                    const res = await api.post(`/documents/${document.id}/export/`, { format: 'report_pdf' })
+                    if (res.data?.download_url) {
+                      window.open(res.data.download_url, '_blank')
+                    }
+                  } catch (e) {
+                    alert('Gagal mengekspor laporan.')
+                  }
+                }}
+                className="w-full text-left px-3 py-2 text-xs font-inter hover:bg-muted rounded-sm transition-colors text-foreground"
+              >
+                Laporan Analisis (PDF)
+              </button>
+              
+              <button 
+                onClick={async () => {
+                  try {
+                    const res = await api.post(`/documents/${document.id}/export/`, { format: 'contract_docx' })
+                    if (res.data?.download_url) {
+                      window.open(res.data.download_url, '_blank')
+                    }
+                  } catch (e: any) {
+                    if (e.response?.status === 403) {
+                      alert('Fitur ini eksklusif untuk pelanggan PRO (B2B). Silakan upgrade paket Anda.')
+                    } else {
+                      alert(e.response?.data?.detail || 'Gagal mengekspor draf. Pastikan Anda sudah melakukan Auto-Fix terlebih dahulu.')
+                    }
+                  }
+                }}
+                className="w-full text-left px-3 py-2 text-xs font-inter hover:bg-muted rounded-sm transition-colors flex items-center justify-between text-foreground"
+              >
+                <span>Kontrak Diperbaiki (DOCX)</span>
+                <span className="text-[10px] font-space tracking-widest bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded uppercase font-bold">PRO</span>
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
     </Card>

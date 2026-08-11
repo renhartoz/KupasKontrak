@@ -18,6 +18,7 @@ from documents.serializers import (
     DocumentListSerializer,
     DocumentUploadSerializer,
 )
+from documents.services.export_service import generate_analysis_report_pdf, generate_fixed_contract_docx
 from documents.tasks import process_document
 
 
@@ -96,7 +97,7 @@ class DocumentRetryView(APIView):
 class DocumentExportView(APIView):
     """Export audit"""
 
-    permission_classes = [IsAuthenticated, IsDocumentOwner, IsTierB2B]
+    permission_classes = [IsAuthenticated, IsDocumentOwner]
 
     @extend_schema(summary="Export audit", request=DocumentExportSerializer, responses={200: dict})
     def post(self, request, pk):
@@ -106,13 +107,27 @@ class DocumentExportView(APIView):
         serializer.is_valid(raise_exception=True)
         fmt = serializer.validated_data["format"]
 
-        signed_url, _ = generate_signed_url(doc.cloudinary_public_id, ttl_seconds=3600)
+        if fmt == "contract_docx":
+            # Check B2B permission for contract generation
+            if request.user.tier != "b2b_profesional":
+                return Response({"detail": "Requires B2B Professional tier."}, status=status.HTTP_403_FORBIDDEN)
+            try:
+                secure_url = generate_fixed_contract_docx(doc)
+            except Exception as e:
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # report_pdf is free
+            try:
+                secure_url = generate_analysis_report_pdf(doc)
+            except Exception as e:
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         return Response(
             {
                 "document_id": str(doc.id),
                 "original_filename": doc.original_filename,
                 "format": fmt,
-                "download_url": signed_url,
+                "download_url": secure_url,
                 "overall_risk_score": doc.overall_risk_score,
                 "score_breakdown": doc.score_breakdown,
             }

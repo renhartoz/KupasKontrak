@@ -64,5 +64,4 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
 
 class DocumentExportSerializer(serializers.Serializer):
     """Export document"""
-
-    format = serializers.ChoiceField(choices=["pdf", "docx"], default="pdf")
+    format = serializers.ChoiceField(choices=["report_pdf", "contract_docx"], default="report_pdf")
