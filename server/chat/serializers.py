@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from chat.models import ClauseInquiry
+from chat.models import ClauseInquiry, DocumentInquiry
 
 
 class ClauseInquirySerializer(serializers.ModelSerializer):
@@ -13,5 +13,20 @@ class ClauseInquirySerializer(serializers.ModelSerializer):
 
 class ClauseAskSerializer(serializers.Serializer):
     """Ask question"""
+
+    question = serializers.CharField(required=True, min_length=3)
+
+
+class DocumentInquirySerializer(serializers.ModelSerializer):
+    """Document Inquiry details"""
+
+    class Meta:
+        model = DocumentInquiry
+        fields = ["id", "document", "user", "question", "answer", "created_at"]
+        read_only_fields = ["id", "document", "user", "answer", "created_at"]
+
+
+class DocumentAskSerializer(serializers.Serializer):
+    """Ask document question"""
 
     question = serializers.CharField(required=True, min_length=3)

@@ -19,7 +19,7 @@ interface Inquiry {
   created_at: string
 }
 
-export function ChatbotPanel({ selectedClauseId }: ChatbotPanelProps) {
+export function ChatbotPanel({ selectedClauseId, documentId }: ChatbotPanelProps) {
   const [question, setQuestion] = useState('')
   const [isAsking, setIsAsking] = useState(false)
   const [streamingQuestion, setStreamingQuestion] = useState('')
@@ -27,13 +27,16 @@ export function ChatbotPanel({ selectedClauseId }: ChatbotPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { data: history = [], refetch } = useQuery<Inquiry[]>({
-    queryKey: ['chatHistory', selectedClauseId],
+    queryKey: ['chatHistory', selectedClauseId, documentId],
     queryFn: async () => {
-      if (!selectedClauseId) return []
-      const res = await api.get(`/chat/clauses/${selectedClauseId}/inquiries/`)
+      if (!selectedClauseId && !documentId) return []
+      const endpoint = selectedClauseId
+        ? `/chat/clauses/${selectedClauseId}/inquiries/`
+        : `/chat/documents/${documentId}/inquiries/`
+      const res = await api.get(endpoint)
       return res.data.results ? res.data.results.reverse() : res.data.reverse()
     },
-    enabled: !!selectedClauseId
+    enabled: !!selectedClauseId || !!documentId
   })
 
   useEffect(() => {
@@ -41,7 +44,7 @@ export function ChatbotPanel({ selectedClauseId }: ChatbotPanelProps) {
   }, [history])
 
   const handleAsk = async (text: string) => {
-    if (!text.trim() || !selectedClauseId || isAsking) return
+    if (!text.trim() || (!selectedClauseId && !documentId) || isAsking) return
     
     setIsAsking(true)
     setQuestion('')
@@ -51,7 +54,11 @@ export function ChatbotPanel({ selectedClauseId }: ChatbotPanelProps) {
     try {
       const token = localStorage.getItem('token')
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/v1'
-      const response = await fetch(`${baseUrl}/chat/clauses/${selectedClauseId}/ask/`, {
+      const endpoint = selectedClauseId
+        ? `/chat/clauses/${selectedClauseId}/ask/`
+        : `/chat/documents/${documentId}/ask/`
+        
+      const response = await fetch(`${baseUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,9 +109,9 @@ export function ChatbotPanel({ selectedClauseId }: ChatbotPanelProps) {
           <div>
             <h2 className="text-xl font-instrument text-primary tracking-tight">Qupy AI</h2>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <div className={`w-2 h-2 rounded-full ${selectedClauseId ? 'bg-emerald-500' : 'bg-muted-foreground'}`}></div>
+              <div className={`w-2 h-2 rounded-full ${selectedClauseId ? 'bg-emerald-500' : (documentId ? 'bg-blue-500' : 'bg-muted-foreground')}`}></div>
               <span className="text-[10px] font-space uppercase tracking-widest text-muted-foreground font-semibold">
-                {selectedClauseId ? 'Siap Berdiskusi' : 'Pilih Klausul'}
+                {selectedClauseId ? 'Siap Berdiskusi (Klausul)' : (documentId ? 'Siap Berdiskusi (Dokumen)' : 'Pilih Dokumen/Klausul')}
               </span>
             </div>
           </div>
@@ -117,7 +124,7 @@ export function ChatbotPanel({ selectedClauseId }: ChatbotPanelProps) {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col p-6 overflow-y-auto bg-card">
         
-        {!selectedClauseId ? (
+        {(!selectedClauseId && !documentId) ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center max-w-sm mx-auto">
             <div className="w-16 h-16 bg-muted text-primary flex items-center justify-center mb-6 rounded-xl">
               <Info className="w-8 h-8" />
@@ -136,15 +143,28 @@ export function ChatbotPanel({ selectedClauseId }: ChatbotPanelProps) {
                   <span className="text-secondary">✦</span> PERTANYAAN CEPAT
                 </h4>
                 <div className="flex flex-col gap-2">
-                  <button onClick={() => handleAsk("Tolong jelaskan klausul ini dalam bahasa yang sederhana.")} className="bg-muted hover:bg-muted/80 text-foreground px-4 py-3 text-xs font-space tracking-wide transition-colors text-left rounded-md border border-border/50">
-                    Jelaskan klausul ini
-                  </button>
-                  <button onClick={() => handleAsk("Apakah ada risiko tersembunyi di sini?")} className="bg-muted hover:bg-muted/80 text-foreground px-4 py-3 text-xs font-space tracking-wide transition-colors text-left rounded-md border border-border/50">
-                    Identifikasi risiko tersembunyi
-                  </button>
-                  <button onClick={() => handleAsk("Bantu saya menulis ulang agar lebih seimbang bagi kedua pihak.")} className="bg-muted hover:bg-muted/80 text-foreground px-4 py-3 text-xs font-space tracking-wide transition-colors text-left rounded-md border border-border/50">
-                    Tulis ulang agar seimbang
-                  </button>
+                  {selectedClauseId ? (
+                    <>
+                      <button onClick={() => handleAsk("Tolong jelaskan klausul ini dalam bahasa yang sederhana.")} className="bg-muted hover:bg-muted/80 text-foreground px-4 py-3 text-xs font-space tracking-wide transition-colors text-left rounded-md border border-border/50">
+                        Jelaskan klausul ini
+                      </button>
+                      <button onClick={() => handleAsk("Apakah ada risiko tersembunyi di sini?")} className="bg-muted hover:bg-muted/80 text-foreground px-4 py-3 text-xs font-space tracking-wide transition-colors text-left rounded-md border border-border/50">
+                        Identifikasi risiko tersembunyi
+                      </button>
+                      <button onClick={() => handleAsk("Bantu saya menulis ulang agar lebih seimbang bagi kedua pihak.")} className="bg-muted hover:bg-muted/80 text-foreground px-4 py-3 text-xs font-space tracking-wide transition-colors text-left rounded-md border border-border/50">
+                        Tulis ulang agar seimbang
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => handleAsk("Tolong berikan ringkasan dari keseluruhan dokumen ini.")} className="bg-muted hover:bg-muted/80 text-foreground px-4 py-3 text-xs font-space tracking-wide transition-colors text-left rounded-md border border-border/50">
+                        Ringkasan Dokumen
+                      </button>
+                      <button onClick={() => handleAsk("Apakah ada potensi jebakan hukum secara keseluruhan dalam kontrak ini?")} className="bg-muted hover:bg-muted/80 text-foreground px-4 py-3 text-xs font-space tracking-wide transition-colors text-left rounded-md border border-border/50">
+                        Risiko Utama Dokumen
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
