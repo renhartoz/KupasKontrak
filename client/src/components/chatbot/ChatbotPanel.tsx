@@ -171,7 +171,7 @@ export function ChatbotPanel({ selectedClauseId, documentId }: ChatbotPanelProps
               <div className="flex flex-col gap-4">
                 <div className="text-center">
                   <span className="text-[10px] font-space uppercase tracking-widest text-muted-foreground font-semibold bg-muted px-2 py-1 rounded">
-                    Mulai Diskusi Klausul
+                    {selectedClauseId ? 'Mulai Diskusi Klausul' : 'Mulai Diskusi Dokumen'}
                   </span>
                 </div>
                 
@@ -223,16 +223,16 @@ export function ChatbotPanel({ selectedClauseId, documentId }: ChatbotPanelProps
         <div className="relative">
           <Input 
             className="w-full pl-4 pr-12 h-12 bg-muted/50 border-border focus-visible:ring-primary text-sm font-inter rounded-md"
-            placeholder={selectedClauseId ? "Berikan tanggapan ke AI..." : "Pilih klausul dulu..."}
+            placeholder={selectedClauseId ? "Diskusikan klausul ini..." : (documentId ? "Diskusikan dokumen ini..." : "Pilih dokumen/klausul...")}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={!selectedClauseId || isAsking}
+            disabled={(!selectedClauseId && !documentId) || isAsking}
           />
           <Button 
             size="icon" 
             onClick={() => handleAsk(question)}
-            disabled={!selectedClauseId || !question.trim() || isAsking}
+            disabled={(!selectedClauseId && !documentId) || !question.trim() || isAsking}
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary hover:bg-primary/90 text-primary-foreground w-8 h-8 rounded-md"
           >
             <ArrowUp className="w-4 h-4" />
