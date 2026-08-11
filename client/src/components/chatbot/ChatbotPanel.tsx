@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MessageSquare, MoreVertical, ArrowUp, Info } from 'lucide-react'
+import { MessageSquare, MoreVertical, ArrowUp, Info, AlertCircle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -24,6 +24,7 @@ export function ChatbotPanel({ selectedClauseId, documentId }: ChatbotPanelProps
   const [isAsking, setIsAsking] = useState(false)
   const [streamingQuestion, setStreamingQuestion] = useState('')
   const [streamingAnswer, setStreamingAnswer] = useState('')
+  const [streamError, setStreamError] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { data: history = [], refetch } = useQuery<Inquiry[]>({
@@ -50,6 +51,7 @@ export function ChatbotPanel({ selectedClauseId, documentId }: ChatbotPanelProps
     setQuestion('')
     setStreamingQuestion(text)
     setStreamingAnswer('')
+    setStreamError(false)
 
     try {
       const token = localStorage.getItem('token')
@@ -66,6 +68,10 @@ export function ChatbotPanel({ selectedClauseId, documentId }: ChatbotPanelProps
         },
         body: JSON.stringify({ question: text })
       })
+      
+      if (!response.ok) {
+        throw new Error('API request failed')
+      }
 
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
@@ -83,12 +89,13 @@ export function ChatbotPanel({ selectedClauseId, documentId }: ChatbotPanelProps
         }
       }
       refetch()
-    } catch (e) {
-      console.error('Failed to ask question', e)
-    } finally {
-      setIsAsking(false)
       setStreamingQuestion('')
       setStreamingAnswer('')
+    } catch (e) {
+      console.error('Failed to ask question', e)
+      setStreamError(true)
+    } finally {
+      setIsAsking(false)
     }
   }
 
@@ -196,12 +203,32 @@ export function ChatbotPanel({ selectedClauseId, documentId }: ChatbotPanelProps
                     <div className="self-end bg-primary/10 text-foreground px-4 py-3 rounded-2xl rounded-tr-sm max-w-[85%] border border-primary/20">
                       <p className="text-sm font-inter leading-relaxed">{streamingQuestion}</p>
                     </div>
-                    <div className="self-start bg-muted text-foreground px-4 py-3 rounded-2xl rounded-tl-sm max-w-[90%] border border-border shadow-sm">
-                      {!streamingAnswer ? (
-                        <div className="flex gap-1 items-center h-5">
-                          <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce"></span>
-                          <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                          <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                    <div className={`self-start text-foreground px-4 py-3 rounded-2xl rounded-tl-sm max-w-[90%] border shadow-sm ${streamError ? 'bg-destructive/10 border-destructive/20' : 'bg-muted border-border'}`}>
+                      {streamError ? (
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-2 text-destructive font-medium text-sm">
+                            <AlertCircle className="w-4 h-4 shrink-0" />
+                            <span>Gagal merespon. Silakan coba lagi.</span>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="self-start text-xs h-8 bg-background hover:bg-muted"
+                            onClick={() => handleAsk(streamingQuestion)}
+                            disabled={isAsking}
+                          >
+                            <RefreshCw className={`w-3 h-3 mr-2 ${isAsking ? 'animate-spin' : ''}`} />
+                            Coba Lagi
+                          </Button>
+                        </div>
+                      ) : !streamingAnswer ? (
+                        <div className="flex items-center gap-3 h-5">
+                          <span className="text-sm text-muted-foreground font-inter italic">{selectedClauseId ? 'Menganalisis klausul...' : 'Menganalisis dokumen...'}</span>
+                          <div className="flex gap-1 items-center">
+                            <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce"></span>
+                            <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                            <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                          </div>
                         </div>
                       ) : (
                         <div className="text-sm font-inter leading-relaxed prose prose-sm dark:prose-invert [&>p]:mb-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4 [&>h1]:font-bold [&>h2]:font-bold [&>h3]:font-bold">
