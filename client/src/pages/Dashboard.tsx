@@ -31,6 +31,14 @@ export function Dashboard() {
     }
   })
 
+  const { data: billingInfo } = useQuery({
+    queryKey: ['billingInfo'],
+    queryFn: async () => {
+      const res = await api.get('/billing/info/')
+      return res.data
+    }
+  })
+
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
@@ -192,10 +200,17 @@ export function Dashboard() {
           </h2>
           <div className="space-y-3 bg-muted/50 p-3 mt-4 border-l-4 border-solid border-primary">
             <div className="flex justify-between items-center text-sm font-inter">
-              <span className="text-muted-foreground">Sisa Kuota:</span>
-              <span className="font-bold text-foreground">{isB2B ? 'Tak Terbatas' : '3 / Bulan'}</span>
+              <span className="text-muted-foreground">Sisa Kuota Bulanan:</span>
+              <span className="font-bold text-foreground">
+                {isB2B ? 'Tak Terbatas' : billingInfo?.quota ? `${Math.max(0, billingInfo.quota.monthly_limit - billingInfo.quota.used_this_month)} / ${billingInfo.quota.monthly_limit}` : '...'}
+              </span>
             </div>
-
+            {!isB2B && (
+              <div className="flex justify-between items-center text-sm font-inter">
+                <span className="text-muted-foreground">Token Ekstra:</span>
+                <span className="font-bold text-amber-600">{billingInfo?.quota?.extra_tokens || 0} Token</span>
+              </div>
+            )}
           </div>
           <div className="mt-auto pt-4">
             <Button onClick={() => navigate('/billing')} className="w-full rounded-md font-space text-xs font-bold uppercase tracking-widest h-11 bg-amber-500 hover:bg-amber-600 text-white cursor-pointer">

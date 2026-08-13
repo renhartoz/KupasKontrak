@@ -91,9 +91,9 @@ class DocumentRetryView(APIView):
     def post(self, request, pk):
         doc = get_object_or_404(Document, pk=pk)
         self.check_object_permissions(request, doc)
-        if doc.status != Document.Status.FAILED:
+        if doc.status == Document.Status.DONE:
             return Response(
-                {"detail": "Only failed documents can be retried."},
+                {"detail": "Completed documents cannot be retried."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         doc.status = Document.Status.UPLOADED

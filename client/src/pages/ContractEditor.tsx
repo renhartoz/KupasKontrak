@@ -139,14 +139,24 @@ export function ContractEditor() {
     )
   }
 
-  if (document.status === 'uploaded' || document.status === 'processing') {
+  if (document.status !== 'done' && document.status !== 'failed') {
     return (
       <div className="h-[calc(100vh-160px)] flex flex-col w-full border border-border rounded-xl overflow-hidden shadow-sm bg-card animate-fade-in min-h-[500px] items-center justify-center p-8 text-center">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-6" />
         <h2 className="text-3xl font-instrument text-primary mb-2">AI Sedang Memindai...</h2>
-        <p className="text-sm font-inter text-muted-foreground max-w-md">
+        <p className="text-sm font-inter text-muted-foreground max-w-md mb-8">
           Dokumen sedang diproses oleh AI untuk mendeteksi risiko dan mengekstrak klausul. Mohon tunggu beberapa saat.
         </p>
+        <button onClick={async () => {
+          try {
+            await api.post(`/documents/${id}/retry/`)
+            window.location.reload()
+          } catch (e) {
+            alert('Gagal mengulang proses dokumen.')
+          }
+        }} className="bg-secondary/20 hover:bg-secondary/30 text-secondary-foreground border border-secondary/30 px-4 py-2 rounded-md text-[10px] font-space uppercase tracking-widest transition-colors cursor-pointer">
+          Pemindaian Macet? (Coba Lagi)
+        </button>
       </div>
     )
   }
