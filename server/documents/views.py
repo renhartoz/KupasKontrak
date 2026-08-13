@@ -1,5 +1,6 @@
 import asyncio
 import json
+from accounts.services.quota_service import consume_upload_quota
 from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
@@ -31,6 +32,14 @@ class DocumentUploadView(APIView):
     def post(self, request):
         serializer = DocumentUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        
+        # Cek kuota sebelum lanjut
+        if not consume_upload_quota(request.user):
+            return Response(
+                {"detail": "Batas unggahan dokumen bulanan telah tercapai. Silakan beli Token Tambahan atau Upgrade ke Pro."},
+                status=status.HTTP_402_PAYMENT_REQUIRED
+            )
+            
         file_obj = serializer.validated_data["file"]
 
         upload_result = upload_document(file_obj)

@@ -16,6 +16,7 @@ class Transaction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='transactions')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    plan = models.CharField(max_length=50, blank=True, null=True)
     payment_type = models.CharField(max_length=50, blank=True, null=True)
     snap_token = models.CharField(max_length=255, blank=True, null=True)
     snap_redirect_url = models.URLField(max_length=500, blank=True, null=True)

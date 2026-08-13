@@ -13,4 +13,5 @@ class User(AbstractUser):
     tier = models.CharField(
         max_length=32, choices=Tier.choices, default=Tier.B2C_ESENSIAL
     )
+    extra_document_tokens = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

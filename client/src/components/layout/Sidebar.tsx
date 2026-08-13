@@ -11,7 +11,7 @@ export function Sidebar() {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Galeri', path: '/gallery', icon: FileEdit },
     { name: 'Scanner', path: '/scanner', icon: ShieldAlert },
-    { name: 'Pricing', path: '/pricing', icon: CreditCard },
+    { name: 'Billing', path: '/billing', icon: CreditCard },
   ]
 
   return (

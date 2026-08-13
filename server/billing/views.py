@@ -9,6 +9,7 @@ from rest_framework import status
 from .models import Transaction
 from .services import create_snap_transaction, verify_webhook_signature, check_transaction_status
 from accounts.models import User
+from accounts.services.quota_service import get_user_quota_status
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,9 @@ class CreateTransactionView(APIView):
         plan = request.data.get('plan', 'profesional').lower()
         
         PRICING_TIERS = {
-            'profesional': 49000,
+            'profesional': 99000,
+            'token_1': 10000,
+            'token_5': 40000,
         }
         
         if plan == 'enterprise':
@@ -39,7 +42,8 @@ class CreateTransactionView(APIView):
                 order_id=order_id,
                 user=user,
                 amount=amount,
-                status='pending'
+                status='pending',
+                plan=plan
             )
         
         customer_details = {
@@ -49,11 +53,15 @@ class CreateTransactionView(APIView):
             "phone": getattr(user, "phone", None) or "080000000000",
         }
 
+        item_name = "Paket B2B Profesional" if plan == 'profesional' else (
+            "1 Token Tambahan (KupasKontrak)" if plan == 'token_1' else "5 Token Tambahan (KupasKontrak)"
+        )
+        
         item_details = [{
             "id": plan,
             "price": amount,
             "quantity": 1,
-            "name": f"Paket B2B {plan.title()}"
+            "name": item_name
         }]
 
         try:
@@ -96,8 +104,15 @@ class MidtransWebhookView(APIView):
                     trx.status = 'settlement'
                     
                     user = trx.user
-                    user.tier = User.Tier.B2B_PROFESIONAL
-                    user.save(update_fields=['tier'])
+                    if trx.plan == 'token_1':
+                        user.extra_document_tokens += 1
+                        user.save(update_fields=['extra_document_tokens'])
+                    elif trx.plan == 'token_5':
+                        user.extra_document_tokens += 5
+                        user.save(update_fields=['extra_document_tokens'])
+                    else:
+                        user.tier = User.Tier.B2B_PROFESIONAL
+                        user.save(update_fields=['tier'])
                 elif transaction_status in ['deny', 'cancel', 'expire', 'failure']:
                     trx.status = transaction_status
                 elif transaction_status == 'pending':
@@ -131,8 +146,15 @@ class CheckTransactionStatusView(APIView):
                 if transaction_status == 'settlement' or transaction_status == 'capture':
                     trx.status = 'settlement'
                     user = trx.user
-                    user.tier = User.Tier.B2B_PROFESIONAL
-                    user.save(update_fields=['tier'])
+                    if trx.plan == 'token_1':
+                        user.extra_document_tokens += 1
+                        user.save(update_fields=['extra_document_tokens'])
+                    elif trx.plan == 'token_5':
+                        user.extra_document_tokens += 5
+                        user.save(update_fields=['extra_document_tokens'])
+                    else:
+                        user.tier = User.Tier.B2B_PROFESIONAL
+                        user.save(update_fields=['tier'])
                 elif transaction_status in ['deny', 'cancel', 'expire', 'failure']:
                     trx.status = transaction_status
                 elif transaction_status == 'pending':
@@ -146,3 +168,30 @@ class CheckTransactionStatusView(APIView):
         except Exception as e:
             logger.error(f"Error manually checking status: {e}")
             return Response({"error": "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BillingInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        quota_status = get_user_quota_status(user)
+        
+        # Get past 10 transactions
+        transactions = Transaction.objects.filter(user=user).order_by('-created_at')[:10]
+        trx_data = []
+        for t in transactions:
+            trx_data.append({
+                "id": t.order_id,
+                "amount": t.amount,
+                "status": t.status,
+                "plan": t.plan,
+                "created_at": t.created_at.isoformat(),
+            })
+
+        return Response({
+            "tier": user.tier,
+            "quota": quota_status,
+            "transactions": trx_data,
+        })
+

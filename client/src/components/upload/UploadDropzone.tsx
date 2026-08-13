@@ -9,6 +9,7 @@ export function UploadDropzone() {
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState('')
+  const [isQuotaExceeded, setIsQuotaExceeded] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
 
@@ -40,6 +41,7 @@ export function UploadDropzone() {
 
   const uploadFile = async (file: File) => {
     setError('')
+    setIsQuotaExceeded(false)
     if (!file.name.toLowerCase().endsWith('.pdf')) {
       setError('Hanya mendukung format PDF untuk saat ini.')
       return
@@ -62,7 +64,12 @@ export function UploadDropzone() {
 
       navigate(`/editor/${response.data.id}`)
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.response?.data?.file?.[0] || 'Gagal mengunggah dokumen.')
+      if (err.response?.status === 402) {
+        setIsQuotaExceeded(true)
+        setError(err.response?.data?.detail || 'Batas unggahan tercapai.')
+      } else {
+        setError(err.response?.data?.detail || err.response?.data?.file?.[0] || 'Gagal mengunggah dokumen.')
+      }
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) {
@@ -106,9 +113,24 @@ export function UploadDropzone() {
             Dukung format PDF (maksimal 25MB) untuk dipindai secara instan oleh AI.
           </p>
 
-          {error && (
+          {error && !isQuotaExceeded && (
             <div className="text-destructive text-sm font-inter mb-4 bg-destructive/10 p-2 rounded">
               {error}
+            </div>
+          )}
+
+          {isQuotaExceeded && (
+            <div className="text-amber-600 text-sm font-inter mb-6 bg-amber-500/10 p-4 rounded-md border border-amber-500/20 text-left">
+              <div className="font-bold mb-1 font-instrument text-base">Kuota Anda Telah Habis</div>
+              <p className="text-xs mb-3 leading-relaxed">{error}</p>
+              <div className="flex gap-2">
+                <Button onClick={() => navigate('/billing')} className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-space tracking-widest uppercase h-9 shadow-sm">
+                  Beli Token
+                </Button>
+                <Button onClick={() => navigate('/billing')} variant="outline" className="text-xs font-space tracking-widest uppercase h-9 border-amber-600/30 text-amber-700 hover:bg-amber-500/10 bg-transparent shadow-sm">
+                  Upgrade Pro
+                </Button>
+              </div>
             </div>
           )}
 

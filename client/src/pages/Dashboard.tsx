@@ -198,7 +198,7 @@ export function Dashboard() {
 
           </div>
           <div className="mt-auto pt-4">
-            <Button onClick={() => navigate('/pricing')} className="w-full rounded-md font-space text-xs font-bold uppercase tracking-widest h-11 bg-amber-500 hover:bg-amber-600 text-white cursor-pointer">
+            <Button onClick={() => navigate('/billing')} className="w-full rounded-md font-space text-xs font-bold uppercase tracking-widest h-11 bg-amber-500 hover:bg-amber-600 text-white cursor-pointer">
               Kelola Paket
             </Button>
           </div>

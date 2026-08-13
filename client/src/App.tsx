@@ -11,7 +11,7 @@ import { ContractGallery } from './pages/ContractGallery'
 import { ContractEditor } from './pages/ContractEditor'
 import { RiskScanner } from './pages/RiskScanner'
 import { RiskResults } from './pages/RiskResults'
-import { Pricing } from './pages/Pricing'
+import { Billing } from './pages/Billing'
 import { Settings } from './pages/Settings'
 
 // Public Pages
@@ -45,7 +45,7 @@ function App() {
                 <Route path="/editor/:id" element={<ContractEditor />} />
                 <Route path="/results/:id" element={<RiskResults />} />
                 <Route path="/scanner" element={<RiskScanner />} />
-                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/billing" element={<Billing />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
             </Route>
