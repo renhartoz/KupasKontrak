@@ -201,6 +201,14 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_IGNORE_RESULT = True
+CELERY_WORKER_SEND_TASK_EVENTS = False
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "visibility_timeout": 3600,
+    "max_connections": 5,
+    "socket_timeout": 120,
+    "health_check_interval": 30,
+}
 
 OCR_SPACE_API_KEY = env("OCR_SPACE_API_KEY", default="")
 OCR_SPACE_TIER = env("OCR_SPACE_TIER", default="free")
