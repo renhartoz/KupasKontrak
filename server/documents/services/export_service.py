@@ -12,19 +12,21 @@ import os
 import cloudinary.uploader
 from insights.models import GeneratedContractDraft
 
-# Font Registration
-FONT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'fonts')
+from django.conf import settings
+
+FONT_DIR = settings.BASE_DIR / 'fonts'
 try:
-    pdfmetrics.registerFont(TTFont('InstrumentSerif', os.path.join(FONT_DIR, 'InstrumentSerif-Regular.ttf')))
-    pdfmetrics.registerFont(TTFont('Inter', os.path.join(FONT_DIR, 'Inter-Regular.ttf')))
-    pdfmetrics.registerFont(TTFont('SpaceGrotesk', os.path.join(FONT_DIR, 'SpaceGrotesk-Regular.ttf')))
-    pdfmetrics.registerFont(TTFont('SpaceGrotesk-Bold', os.path.join(FONT_DIR, 'SpaceGrotesk-Bold.ttf')))
+    pdfmetrics.registerFont(TTFont('InstrumentSerif', str(FONT_DIR / 'InstrumentSerif-Regular.ttf')))
+    pdfmetrics.registerFont(TTFont('Inter', str(FONT_DIR / 'Inter-Regular.ttf')))
+    pdfmetrics.registerFont(TTFont('SpaceGrotesk', str(FONT_DIR / 'SpaceGrotesk-Regular.ttf')))
+    pdfmetrics.registerFont(TTFont('SpaceGrotesk-Bold', str(FONT_DIR / 'SpaceGrotesk-Bold.ttf')))
     
     FONT_TITLE = 'InstrumentSerif'
     FONT_BODY = 'Inter'
     FONT_TAG = 'SpaceGrotesk'
     FONT_TAG_BOLD = 'SpaceGrotesk-Bold'
-except:
+except Exception as e:
+    print(f"Error loading fonts: {e}")
     FONT_TITLE = 'Helvetica'
     FONT_BODY = 'Helvetica'
     FONT_TAG = 'Helvetica'
@@ -48,11 +50,10 @@ def generate_analysis_report_pdf(document):
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
     styles = getSampleStyleSheet()
     
-    # Custom colors matching KupasKontrak theme
-    PRIMARY_COLOR = colors.HexColor('#1e3a8a') # Blue
-    WARNING_COLOR = colors.HexColor('#f59e0b') # Amber
-    DANGER_COLOR = colors.HexColor('#ef4444')  # Red
-    SAFE_COLOR = colors.HexColor('#10b981')    # Emerald
+    PRIMARY_COLOR = colors.HexColor('#1e3a8a') 
+    WARNING_COLOR = colors.HexColor('#f59e0b')
+    DANGER_COLOR = colors.HexColor('#ef4444')  
+    SAFE_COLOR = colors.HexColor('#10b981')    
     TEXT_COLOR = colors.HexColor('#333333')
     MUTED_COLOR = colors.HexColor('#64748b')
 
@@ -61,8 +62,8 @@ def generate_analysis_report_pdf(document):
         'MainTitle',
         parent=styles['Heading1'],
         fontName=FONT_TITLE,
-        fontSize=36,
-        leading=42,
+        fontSize=28,
+        leading=34,
         textColor=PRIMARY_COLOR,
         alignment=1,
         spaceAfter=15
@@ -97,14 +98,15 @@ def generate_analysis_report_pdf(document):
     
     elements = []
     
-    elements.append(Paragraph("KupasKontrak", ParagraphStyle('Logo', fontName=FONT_TITLE, fontSize=24, textColor=PRIMARY_COLOR)))
-    elements.append(HRFlowable(width="100%", thickness=1, color=PRIMARY_COLOR, spaceBefore=5, spaceAfter=20))
+    elements.append(Paragraph("KupasKontrak", ParagraphStyle('Logo', fontName=FONT_TITLE, fontSize=20, textColor=PRIMARY_COLOR)))
+    elements.append(Spacer(1, 10))
+    elements.append(HRFlowable(width="100%", thickness=1, color=PRIMARY_COLOR, spaceBefore=0, spaceAfter=20))
     
     elements.append(Paragraph("Hasil Analisis Risiko Kontrak", title_style))
     elements.append(Paragraph(f"Dokumen: <b>{document.original_filename}</b>", muted_style))
     elements.append(Spacer(1, 30))
     
-    score = document.overall_risk_score or 0
+    score = round(document.overall_risk_score or 0)
     
     if score >= 70:
         risk_status = "RISIKO TINGGI"
@@ -120,8 +122,8 @@ def generate_analysis_report_pdf(document):
         'Score',
         parent=styles['Heading1'],
         fontName=FONT_TITLE,
-        fontSize=64,
-        leading=70,
+        fontSize=48,
+        leading=56,
         textColor=score_color,
         alignment=1,
         spaceAfter=15
