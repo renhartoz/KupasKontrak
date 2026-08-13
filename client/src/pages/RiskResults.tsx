@@ -1,4 +1,4 @@
-import { AlertTriangle, Lightbulb, MapPin, Loader2, ArrowRight, Download } from 'lucide-react'
+import { AlertTriangle, Lightbulb, MapPin, Loader2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -93,35 +93,45 @@ export function RiskResults() {
                 Ekspor Laporan
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-48 p-1 font-inter" align="end">
-              <button 
-                onClick={async () => {
-                  try {
-                    const res = await api.post(`/documents/${id}/export/`, { format: 'report_pdf' })
-                    if (res.data?.download_url) window.open(res.data.download_url, '_blank')
-                  } catch (e) {
-                    alert('Gagal mengekspor PDF.')
-                  }
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted rounded-sm transition-colors text-left"
-              >
-                <Download className="w-4 h-4 text-muted-foreground" />
-                Laporan PDF
-              </button>
-              <button 
-                onClick={async () => {
-                  try {
-                    const res = await api.post(`/documents/${id}/export/`, { format: 'contract_docx' })
-                    if (res.data?.download_url) window.open(res.data.download_url, '_blank')
-                  } catch (e) {
-                    alert('Gagal mengekspor DOCX.')
-                  }
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted rounded-sm transition-colors text-left"
-              >
-                <Download className="w-4 h-4 text-muted-foreground" />
-                Draft DOCX
-              </button>
+            <PopoverContent className="w-64 p-2 bg-card border border-border shadow-md rounded-md" align="end" sideOffset={10}>
+              <div className="flex flex-col gap-1">
+                <button 
+                  onClick={async () => {
+                    try {
+                      const res = await api.post(`/documents/${id}/export/`, { format: 'report_pdf' })
+                      if (res.data?.download_url) {
+                        window.open(res.data.download_url, '_blank')
+                      }
+                    } catch (e) {
+                      alert('Gagal mengekspor laporan.')
+                    }
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs font-inter hover:bg-muted rounded-sm transition-colors text-foreground"
+                >
+                  Laporan Analisis (PDF)
+                </button>
+                
+                <button 
+                  onClick={async () => {
+                    try {
+                      const res = await api.post(`/documents/${id}/export/`, { format: 'contract_docx' })
+                      if (res.data?.download_url) {
+                        window.open(res.data.download_url, '_blank')
+                      }
+                    } catch (e: any) {
+                      if (e.response?.status === 403) {
+                        alert('Fitur ini eksklusif untuk pelanggan PRO (B2B). Silakan upgrade paket Anda.')
+                      } else {
+                        alert(e.response?.data?.detail || 'Gagal mengekspor draf. Pastikan Anda sudah melakukan Auto-Fix terlebih dahulu.')
+                      }
+                    }
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs font-inter hover:bg-muted rounded-sm transition-colors flex items-center justify-between text-foreground"
+                >
+                  <span>Kontrak Diperbaiki (DOCX)</span>
+                  <span className="text-[10px] font-space tracking-widest bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded uppercase font-bold">PRO</span>
+                </button>
+              </div>
             </PopoverContent>
           </Popover>
           <Button onClick={() => navigate(`/editor/${id}`)} className="bg-primary text-primary-foreground hover:bg-primary/90 font-space text-xs tracking-widest uppercase rounded-md shadow-sm">

@@ -6,8 +6,30 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
 from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+import os
 import cloudinary.uploader
 from insights.models import GeneratedContractDraft
+
+# Font Registration
+FONT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'fonts')
+try:
+    pdfmetrics.registerFont(TTFont('InstrumentSerif', os.path.join(FONT_DIR, 'InstrumentSerif-Regular.ttf')))
+    pdfmetrics.registerFont(TTFont('Inter', os.path.join(FONT_DIR, 'Inter-Regular.ttf')))
+    pdfmetrics.registerFont(TTFont('SpaceGrotesk', os.path.join(FONT_DIR, 'SpaceGrotesk-Regular.ttf')))
+    pdfmetrics.registerFont(TTFont('SpaceGrotesk-Bold', os.path.join(FONT_DIR, 'SpaceGrotesk-Bold.ttf')))
+    
+    FONT_TITLE = 'InstrumentSerif'
+    FONT_BODY = 'Inter'
+    FONT_TAG = 'SpaceGrotesk'
+    FONT_TAG_BOLD = 'SpaceGrotesk-Bold'
+except:
+    FONT_TITLE = 'Helvetica'
+    FONT_BODY = 'Helvetica'
+    FONT_TAG = 'Helvetica'
+    FONT_TAG_BOLD = 'Helvetica-Bold'
+
 
 def upload_to_cloudinary(file_buffer, filename, resource_type="raw"):
     file_buffer.seek(0)
@@ -38,18 +60,20 @@ def generate_analysis_report_pdf(document):
     title_style = ParagraphStyle(
         'MainTitle',
         parent=styles['Heading1'],
-        fontName='Helvetica-Bold',
-        fontSize=24,
+        fontName=FONT_TITLE,
+        fontSize=36,
+        leading=42,
         textColor=PRIMARY_COLOR,
-        alignment=1, # Center
-        spaceAfter=10
+        alignment=1,
+        spaceAfter=15
     )
     
     subtitle_style = ParagraphStyle(
         'Subtitle',
         parent=styles['Heading2'],
-        fontName='Helvetica-Bold',
-        fontSize=14,
+        fontName=FONT_TITLE,
+        fontSize=20,
+        leading=26,
         textColor=PRIMARY_COLOR,
         spaceAfter=12
     )
@@ -57,10 +81,10 @@ def generate_analysis_report_pdf(document):
     normal_style = ParagraphStyle(
         'CustomNormal',
         parent=styles['Normal'],
-        fontName='Helvetica',
+        fontName=FONT_BODY,
         fontSize=10,
         textColor=TEXT_COLOR,
-        leading=14
+        leading=16
     )
     
     muted_style = ParagraphStyle(
@@ -73,16 +97,13 @@ def generate_analysis_report_pdf(document):
     
     elements = []
     
-    # Header
-    elements.append(Paragraph("KupasKontrak", ParagraphStyle('Logo', fontName='Helvetica-Bold', fontSize=16, textColor=PRIMARY_COLOR)))
+    elements.append(Paragraph("KupasKontrak", ParagraphStyle('Logo', fontName=FONT_TITLE, fontSize=24, textColor=PRIMARY_COLOR)))
     elements.append(HRFlowable(width="100%", thickness=1, color=PRIMARY_COLOR, spaceBefore=5, spaceAfter=20))
     
-    # Title
     elements.append(Paragraph("Hasil Analisis Risiko Kontrak", title_style))
     elements.append(Paragraph(f"Dokumen: <b>{document.original_filename}</b>", muted_style))
     elements.append(Spacer(1, 30))
     
-    # Score
     score = document.overall_risk_score or 0
     
     if score >= 70:
@@ -98,17 +119,20 @@ def generate_analysis_report_pdf(document):
     score_style = ParagraphStyle(
         'Score',
         parent=styles['Heading1'],
-        fontName='Helvetica-Bold',
-        fontSize=36,
+        fontName=FONT_TITLE,
+        fontSize=52,
+        leading=60,
         textColor=score_color,
-        alignment=1
+        alignment=1,
+        spaceAfter=5
     )
     
     status_style = ParagraphStyle(
         'Status',
         parent=styles['Normal'],
-        fontName='Helvetica-Bold',
+        fontName=FONT_TAG_BOLD,
         fontSize=14,
+        leading=18,
         textColor=score_color,
         alignment=1,
         spaceAfter=30
@@ -119,7 +143,6 @@ def generate_analysis_report_pdf(document):
     
     elements.append(HRFlowable(width="100%", thickness=1, color=colors.lightgrey, spaceBefore=10, spaceAfter=20))
     
-    # Clauses
     elements.append(Paragraph("Rincian Klausul Berisiko", subtitle_style))
     elements.append(Spacer(1, 10))
     
@@ -133,11 +156,9 @@ def generate_analysis_report_pdf(document):
             tag_color = DANGER_COLOR if is_critical else WARNING_COLOR
             status = "KRITIS" if is_critical else "SEDANG"
             
-            # Clause Header
-            clause_title = ParagraphStyle('CT', fontName='Helvetica-Bold', fontSize=11, textColor=tag_color, spaceAfter=6)
+            clause_title = ParagraphStyle('CT', fontName=FONT_TAG_BOLD, fontSize=11, textColor=tag_color, spaceAfter=8)
             elements.append(Paragraph(f"[{status}] Kategori: {c.category}", clause_title))
             
-            # Table for Clause content
             data = [
                 [Paragraph("<b>Teks Asli:</b>", normal_style), Paragraph(c.clause_text or "-", normal_style)],
                 [Paragraph("<b>Analisis AI:</b>", normal_style), Paragraph(c.plain_language_summary or "-", normal_style)]
@@ -168,7 +189,6 @@ def generate_analysis_report_pdf(document):
 
 
 def generate_fixed_contract_docx(document):
-    # Get the latest full_rewrite draft
     draft = document.drafts.filter(draft_type=GeneratedContractDraft.DraftType.FULL_REWRITE).order_by('-created_at').first()
     
     if not draft or not draft.content:
@@ -178,13 +198,11 @@ def generate_fixed_contract_docx(document):
     
     docx = DocxDocument()
     
-    # Set default font to Times New Roman, 12pt
     style = docx.styles['Normal']
     font = style.font
     font.name = 'Times New Roman'
     font.size = Pt(12)
     
-    # Title
     title_text = content_json.get("title", f"Revisi Kontrak: {document.original_filename}")
     heading = docx.add_heading(title_text, 0)
     heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -201,7 +219,6 @@ def generate_fixed_contract_docx(document):
         p = docx.add_paragraph(content)
         p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
         
-    # Disclaimer
     docx.add_page_break()
     disclaimer_p = docx.add_paragraph()
     disclaimer_p.add_run("DISCLAIMER: ").bold = True
