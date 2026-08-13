@@ -120,25 +120,26 @@ def generate_analysis_report_pdf(document):
         'Score',
         parent=styles['Heading1'],
         fontName=FONT_TITLE,
-        fontSize=52,
-        leading=60,
+        fontSize=64,
+        leading=70,
         textColor=score_color,
         alignment=1,
-        spaceAfter=5
+        spaceAfter=15
     )
     
     status_style = ParagraphStyle(
         'Status',
         parent=styles['Normal'],
         fontName=FONT_TAG_BOLD,
-        fontSize=14,
-        leading=18,
+        fontSize=16,
+        leading=20,
         textColor=score_color,
         alignment=1,
         spaceAfter=30
     )
     
     elements.append(Paragraph(f"{score}/100", score_style))
+    elements.append(Spacer(1, 15))
     elements.append(Paragraph(risk_status, status_style))
     
     elements.append(HRFlowable(width="100%", thickness=1, color=colors.lightgrey, spaceBefore=10, spaceAfter=20))

@@ -11,6 +11,7 @@ export function RiskResults() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [selectedHighlight, setSelectedHighlight] = useState<string | null>(null)
+  const [isExporting, setIsExporting] = useState<'pdf' | 'docx' | null>(null)
 
   const { data: document, isLoading: isLoadingDoc } = useQuery({
     queryKey: ['document', id],
@@ -96,24 +97,31 @@ export function RiskResults() {
             <PopoverContent className="w-64 p-2 bg-card border border-border shadow-md rounded-md" align="end" sideOffset={10}>
               <div className="flex flex-col gap-1">
                 <button 
+                  disabled={isExporting !== null}
                   onClick={async () => {
                     try {
+                      setIsExporting('pdf')
                       const res = await api.post(`/documents/${id}/export/`, { format: 'report_pdf' })
                       if (res.data?.download_url) {
                         window.open(res.data.download_url, '_blank')
                       }
                     } catch (e) {
                       alert('Gagal mengekspor laporan.')
+                    } finally {
+                      setIsExporting(null)
                     }
                   }}
-                  className="w-full text-left px-3 py-2 text-xs font-inter hover:bg-muted rounded-sm transition-colors text-foreground"
+                  className="w-full text-left px-3 py-2 text-xs font-inter hover:bg-muted rounded-sm transition-colors text-foreground flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Laporan Analisis (PDF)
+                  {isExporting === 'pdf' && <Loader2 className="w-3 h-3 animate-spin" />}
                 </button>
                 
                 <button 
+                  disabled={isExporting !== null}
                   onClick={async () => {
                     try {
+                      setIsExporting('docx')
                       const res = await api.post(`/documents/${id}/export/`, { format: 'contract_docx' })
                       if (res.data?.download_url) {
                         window.open(res.data.download_url, '_blank')
@@ -124,11 +132,16 @@ export function RiskResults() {
                       } else {
                         alert(e.response?.data?.detail || 'Gagal mengekspor draf. Pastikan Anda sudah melakukan Auto-Fix terlebih dahulu.')
                       }
+                    } finally {
+                      setIsExporting(null)
                     }
                   }}
-                  className="w-full text-left px-3 py-2 text-xs font-inter hover:bg-muted rounded-sm transition-colors flex items-center justify-between text-foreground"
+                  className="w-full text-left px-3 py-2 text-xs font-inter hover:bg-muted rounded-sm transition-colors flex items-center justify-between text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span>Kontrak Diperbaiki (DOCX)</span>
+                  <span className="flex items-center gap-2">
+                    Kontrak Diperbaiki (DOCX)
+                    {isExporting === 'docx' && <Loader2 className="w-3 h-3 animate-spin" />}
+                  </span>
                   <span className="text-[10px] font-space tracking-widest bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded uppercase font-bold">PRO</span>
                 </button>
               </div>

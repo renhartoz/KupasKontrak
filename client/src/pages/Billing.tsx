@@ -99,7 +99,7 @@ export function Billing() {
                 <CreditCard className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-instrument font-semibold text-foreground">Paket Saat Ini</h3>
+                <h3 className="text-2xl font-instrument text-foreground">Paket Saat Ini</h3>
                 <p className="text-xs font-inter text-muted-foreground uppercase tracking-widest">{user?.tier.replace('_', ' ')}</p>
               </div>
             </div>
@@ -127,7 +127,7 @@ export function Billing() {
             <Coins className="w-24 h-24 text-amber-500" />
           </div>
           <div className="relative z-10">
-            <h3 className="text-lg font-instrument font-semibold text-foreground mb-1">Sisa Token Ekstra</h3>
+            <h3 className="text-2xl font-instrument text-foreground mb-1">Sisa Token Ekstra</h3>
             <p className="text-xs font-inter text-muted-foreground mb-6">Token digunakan jika kuota bulanan habis.</p>
             
             <div className="text-5xl font-instrument text-amber-500 mb-6">
@@ -138,15 +138,15 @@ export function Billing() {
       </div>
 
       <div className="space-y-6">
-        <h2 className="text-2xl font-instrument text-foreground">Beli Token Kuota</h2>
+        <h2 className="text-3xl md:text-4xl font-instrument text-foreground">Beli Token Kuota</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="p-6 border border-border shadow-sm rounded-xl bg-card flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h3 className="text-lg font-instrument font-semibold text-foreground">1 Token (Dokumen Ekstra)</h3>
+              <h3 className="text-2xl font-instrument text-foreground">1 Token (Dokumen Ekstra)</h3>
               <p className="text-sm font-inter text-muted-foreground">Berlaku selamanya. Otomatis dipakai jika kuota habis.</p>
             </div>
             <div className="flex flex-col items-end gap-3 shrink-0">
-              <span className="text-2xl font-instrument text-foreground">Rp 10.000</span>
+              <span className="text-3xl font-instrument text-foreground">Rp 10.000</span>
               <Button 
                 onClick={() => handleTransaction('token_1')}
                 disabled={loadingAction === 'token_1'}
@@ -162,11 +162,11 @@ export function Billing() {
               Lebih Hemat
             </div>
             <div>
-              <h3 className="text-lg font-instrument font-semibold text-foreground">5 Token (Paket Hemat)</h3>
+              <h3 className="text-2xl font-instrument text-foreground">5 Token (Paket Hemat)</h3>
               <p className="text-sm font-inter text-muted-foreground">Berlaku selamanya. Otomatis dipakai jika kuota habis.</p>
             </div>
             <div className="flex flex-col items-end gap-3 shrink-0">
-              <span className="text-2xl font-instrument text-amber-600">Rp 40.000</span>
+              <span className="text-3xl font-instrument text-amber-600">Rp 40.000</span>
               <Button 
                 onClick={() => handleTransaction('token_5')}
                 disabled={loadingAction === 'token_5'}
@@ -180,10 +180,10 @@ export function Billing() {
       </div>
 
       <div className="space-y-6">
-        <h2 className="text-2xl font-instrument text-foreground">Upgrade Langganan</h2>
+        <h2 className="text-3xl md:text-4xl font-instrument text-foreground">Upgrade Langganan</h2>
         <Card className="p-8 border-2 border-primary shadow-md rounded-xl bg-primary/5 flex flex-col lg:flex-row gap-8 items-center">
           <div className="flex-1 space-y-4">
-            <h3 className="text-2xl font-instrument text-primary">B2B Profesional</h3>
+            <h3 className="text-3xl md:text-4xl font-instrument text-primary">B2B Profesional</h3>
             <p className="text-sm font-inter text-muted-foreground">Paket komprehensif untuk tim legal dan perusahaan berkembang.</p>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
               <li className="flex items-center gap-3 text-sm font-inter text-foreground">
@@ -221,7 +221,7 @@ export function Billing() {
       </div>
 
       <div className="space-y-6">
-        <h2 className="text-2xl font-instrument text-foreground flex items-center gap-2">
+        <h2 className="text-3xl md:text-4xl font-instrument text-foreground flex items-center gap-2">
           <Receipt className="w-6 h-6" />
           Riwayat Transaksi
         </h2>
