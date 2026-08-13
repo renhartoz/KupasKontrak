@@ -4,7 +4,7 @@ from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
 from reportlab.lib import colors
 import cloudinary.uploader
 from insights.models import GeneratedContractDraft
@@ -23,30 +23,105 @@ def upload_to_cloudinary(file_buffer, filename, resource_type="raw"):
 
 def generate_analysis_report_pdf(document):
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
     styles = getSampleStyleSheet()
     
+    # Custom colors matching KupasKontrak theme
+    PRIMARY_COLOR = colors.HexColor('#1e3a8a') # Blue
+    WARNING_COLOR = colors.HexColor('#f59e0b') # Amber
+    DANGER_COLOR = colors.HexColor('#ef4444')  # Red
+    SAFE_COLOR = colors.HexColor('#10b981')    # Emerald
+    TEXT_COLOR = colors.HexColor('#333333')
+    MUTED_COLOR = colors.HexColor('#64748b')
+
     # Custom styles
-    title_style = styles['Heading1']
-    title_style.alignment = 1 # Center
+    title_style = ParagraphStyle(
+        'MainTitle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=24,
+        textColor=PRIMARY_COLOR,
+        alignment=1, # Center
+        spaceAfter=10
+    )
     
-    subtitle_style = styles['Heading2']
-    normal_style = styles['Normal']
+    subtitle_style = ParagraphStyle(
+        'Subtitle',
+        parent=styles['Heading2'],
+        fontName='Helvetica-Bold',
+        fontSize=14,
+        textColor=PRIMARY_COLOR,
+        spaceAfter=12
+    )
+
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=10,
+        textColor=TEXT_COLOR,
+        leading=14
+    )
+    
+    muted_style = ParagraphStyle(
+        'Muted',
+        parent=normal_style,
+        textColor=MUTED_COLOR,
+        fontSize=9,
+        alignment=1
+    )
     
     elements = []
     
+    # Header
+    elements.append(Paragraph("KupasKontrak", ParagraphStyle('Logo', fontName='Helvetica-Bold', fontSize=16, textColor=PRIMARY_COLOR)))
+    elements.append(HRFlowable(width="100%", thickness=1, color=PRIMARY_COLOR, spaceBefore=5, spaceAfter=20))
+    
     # Title
-    elements.append(Paragraph(f"Hasil Analisis Risiko: {document.original_filename}", title_style))
-    elements.append(Spacer(1, 12))
+    elements.append(Paragraph("Hasil Analisis Risiko Kontrak", title_style))
+    elements.append(Paragraph(f"Dokumen: <b>{document.original_filename}</b>", muted_style))
+    elements.append(Spacer(1, 30))
     
     # Score
     score = document.overall_risk_score or 0
-    risk_status = "Tinggi" if score >= 70 else ("Sedang" if score >= 40 else "Rendah")
-    elements.append(Paragraph(f"Skor Risiko Keseluruhan: <b>{score}/100 ({risk_status})</b>", subtitle_style))
-    elements.append(Spacer(1, 24))
     
-    elements.append(Paragraph("Daftar Klausul Berisiko:", subtitle_style))
-    elements.append(Spacer(1, 12))
+    if score >= 70:
+        risk_status = "RISIKO TINGGI"
+        score_color = DANGER_COLOR
+    elif score >= 40:
+        risk_status = "RISIKO SEDANG"
+        score_color = WARNING_COLOR
+    else:
+        risk_status = "RISIKO RENDAH"
+        score_color = SAFE_COLOR
+        
+    score_style = ParagraphStyle(
+        'Score',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=36,
+        textColor=score_color,
+        alignment=1
+    )
+    
+    status_style = ParagraphStyle(
+        'Status',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=14,
+        textColor=score_color,
+        alignment=1,
+        spaceAfter=30
+    )
+    
+    elements.append(Paragraph(f"{score}/100", score_style))
+    elements.append(Paragraph(risk_status, status_style))
+    
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.lightgrey, spaceBefore=10, spaceAfter=20))
+    
+    # Clauses
+    elements.append(Paragraph("Rincian Klausul Berisiko", subtitle_style))
+    elements.append(Spacer(1, 10))
     
     clauses = document.clauses.filter(clause_safety_score__gte=40).order_by('-clause_safety_score')
     
@@ -54,13 +129,36 @@ def generate_analysis_report_pdf(document):
         elements.append(Paragraph("Tidak ditemukan klausul berisiko sedang atau tinggi. Kontrak ini tergolong sangat aman.", normal_style))
     else:
         for c in clauses:
-            status = "Kritis" if c.clause_safety_score >= 70 else "Sedang"
-            elements.append(Paragraph(f"<b>[Risiko {status}] Kategori: {c.category}</b>", normal_style))
-            elements.append(Paragraph(f"<i>Klausul Asli:</i> {c.clause_text}", normal_style))
-            elements.append(Paragraph(f"<i>Catatan AI:</i> {c.plain_language_summary}", normal_style))
+            is_critical = c.clause_safety_score >= 70
+            tag_color = DANGER_COLOR if is_critical else WARNING_COLOR
+            status = "KRITIS" if is_critical else "SEDANG"
+            
+            # Clause Header
+            clause_title = ParagraphStyle('CT', fontName='Helvetica-Bold', fontSize=11, textColor=tag_color, spaceAfter=6)
+            elements.append(Paragraph(f"[{status}] Kategori: {c.category}", clause_title))
+            
+            # Table for Clause content
+            data = [
+                [Paragraph("<b>Teks Asli:</b>", normal_style), Paragraph(c.clause_text or "-", normal_style)],
+                [Paragraph("<b>Analisis AI:</b>", normal_style), Paragraph(c.plain_language_summary or "-", normal_style)]
+            ]
+            
             if c.legal_reference:
-                elements.append(Paragraph(f"<i>Referensi Hukum:</i> {c.legal_reference}", normal_style))
-            elements.append(Spacer(1, 12))
+                data.append([Paragraph("<b>Referensi Hukum:</b>", normal_style), Paragraph(c.legal_reference, normal_style)])
+                
+            t = Table(data, colWidths=[90, 390])
+            t.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
+                ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#e2e8f0')),
+                ('INNERGRID', (0,0), (-1,-1), 1, colors.HexColor('#e2e8f0')),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+                ('TOPPADDING', (0,0), (-1,-1), 8),
+                ('LEFTPADDING', (0,0), (-1,-1), 8),
+                ('RIGHTPADDING', (0,0), (-1,-1), 8),
+            ]))
+            elements.append(t)
+            elements.append(Spacer(1, 20))
             
     doc.build(elements)
     
