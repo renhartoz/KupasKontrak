@@ -196,18 +196,19 @@ STORAGES = {
 }
 
 CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = env("REDIS_URL", default="redis://localhost:6379/0")
+
+CELERY_RESULT_BACKEND = None
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_IGNORE_RESULT = True
 CELERY_WORKER_SEND_TASK_EVENTS = False
+CELERY_TASK_SEND_SENT_EVENT = False
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": 3600,
-    "max_connections": 5,
+    "max_connections": 2,
     "socket_timeout": 120,
-    "health_check_interval": 30,
 }
 
 OCR_SPACE_API_KEY = env("OCR_SPACE_API_KEY", default="")
