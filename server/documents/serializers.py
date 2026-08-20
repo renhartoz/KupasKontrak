@@ -11,8 +11,16 @@ class DocumentUploadSerializer(serializers.Serializer):
     def validate_file(self, value):
         if not value.name.lower().endswith(".pdf"):
             raise serializers.ValidationError("File format must be PDF.")
+        if value.name.count('.') > 1:
+            raise serializers.ValidationError("Double extensions are not allowed.")
         if value.size > 25 * 1024 * 1024:
             raise serializers.ValidationError("File size exceeds 25 MB limit.")
+        
+        magic_bytes = value.read(5)
+        value.seek(0)
+        if magic_bytes != b"%PDF-":
+            raise serializers.ValidationError("Invalid file content. Must be a genuine PDF.")
+            
         return value
 
 

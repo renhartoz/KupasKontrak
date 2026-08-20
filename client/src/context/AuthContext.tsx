@@ -4,7 +4,7 @@ import { api } from '@/api'
 
 interface AuthContextType {
   user: User | null
-  login: (access: string, refresh: string) => Promise<void>
+  login: (access: string) => Promise<void>
   logout: () => void
   isLoading: boolean
 }
@@ -32,30 +32,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Session expired or invalid')
       localStorage.removeItem('token')
-      localStorage.removeItem('refresh_token')
       setUser(null)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const login = async (access: string, refresh: string) => {
+  const login = async (access: string) => {
     localStorage.setItem('token', access)
-    localStorage.setItem('refresh_token', refresh)
     await checkAuth()
   }
 
   const logout = async () => {
-    const refresh = localStorage.getItem('refresh_token')
-    if (refresh) {
-      try {
-        await api.post('/accounts/logout/', { refresh })
-      } catch (e) {
-        console.error('Logout failed', e)
-      }
+    try {
+      await api.post('/accounts/logout/', {})
+    } catch (e) {
+      console.error('Logout failed', e)
     }
     localStorage.removeItem('token')
-    localStorage.removeItem('refresh_token')
     setUser(null)
   }
 

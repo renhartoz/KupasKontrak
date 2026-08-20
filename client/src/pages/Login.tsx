@@ -33,7 +33,7 @@ export function Login() {
     setError('')
     try {
       const response = await api.post('/accounts/login/', data)
-      await login(response.data.access, response.data.refresh)
+      await login(response.data.access)
       navigate('/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Invalid username or password')

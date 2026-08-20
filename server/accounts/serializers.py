@@ -12,6 +12,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "email", "password", "tier"]
 
+    def validate(self, attrs):
+        for key, value in attrs.items():
+            if isinstance(value, str):
+                attrs[key] = value.strip()
+        return attrs
+
     def create(self, validated_data):
         return User.objects.create_user(
             username=validated_data["username"],
@@ -29,8 +35,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "email", "tier", "created_at"]
         read_only_fields = ["id", "created_at"]
 
+    def validate(self, attrs):
+        for key, value in attrs.items():
+            if isinstance(value, str):
+                attrs[key] = value.strip()
+        return attrs
+
 
 class LogoutSerializer(serializers.Serializer):
     """Logout session"""
 
-    refresh = serializers.CharField()
+    refresh = serializers.CharField(required=False)
